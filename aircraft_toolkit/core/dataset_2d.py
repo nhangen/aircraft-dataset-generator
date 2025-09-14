@@ -35,14 +35,21 @@ class Dataset2D:
         self.background_type = background_type
         
         # Default pose ranges
-        self.pose_range = pose_range or {
+        default_ranges = {
             'pitch': (-45, 45),
-            'yaw': (-180, 180), 
+            'yaw': (-180, 180),
             'roll': (-30, 30),
             'x': (-0.2, 0.2),
             'y': (-0.2, 0.2),
             'z': (0.8, 1.2)
         }
+
+        if pose_range:
+            # Merge user ranges with defaults
+            self.pose_range = default_ranges.copy()
+            self.pose_range.update(pose_range)
+        else:
+            self.pose_range = default_ranges
         
         # Initialize aircraft models
         self.aircraft_models = self._load_aircraft_models()
