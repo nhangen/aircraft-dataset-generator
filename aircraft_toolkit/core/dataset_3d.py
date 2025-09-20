@@ -4,9 +4,16 @@ import os
 import json
 import math
 import numpy as np
+import logging
 from typing import List, Tuple, Dict, Optional
 from PIL import Image, ImageDraw
 from tqdm import tqdm
+
+# Import new provider system
+from ..providers import get_provider
+from ..config import get_config
+
+logger = logging.getLogger(__name__)
 
 
 class Camera:
@@ -41,184 +48,8 @@ class Camera:
         return view_matrix
 
 
-class Aircraft3D:
-    """3D aircraft model with mesh geometry"""
-
-    def __init__(self, name: str, aircraft_type: str):
-        self.name = name
-        self.aircraft_type = aircraft_type
-        self.vertices = np.array([])
-        self.faces = []
-        self._create_mesh()
-
-    def _create_mesh(self):
-        """Create 3D mesh vertices and faces"""
-        pass  # To be implemented by subclasses
-
-
-class F15Fighter3D(Aircraft3D):
-    """3D F-15 fighter aircraft model"""
-
-    def __init__(self):
-        super().__init__("F-15 Eagle", "fighter")
-
-    def _create_mesh(self):
-        """Create simple but recognizable F-15 mesh"""
-        # Simplified F-15 with clean geometry
-        self.vertices = np.array([
-            # Main fuselage
-            [4.0, 0.0, 0.0],     # 0: nose
-            [1.5, 0.0, 0.5],     # 1: cockpit top
-            [0.0, 0.0, 0.3],     # 2: wing root center
-            [-2.0, 0.0, 0.3],    # 3: aft fuselage
-            [-3.5, 0.0, 0.0],    # 4: tail
-
-            # Fuselage bottom
-            [1.5, 0.0, -0.5],    # 5: cockpit bottom
-            [0.0, 0.0, -0.3],    # 6: wing root bottom
-            [-2.0, 0.0, -0.3],   # 7: aft bottom
-
-            # Wings
-            [0.5, -3.0, 0.0],    # 8: left wing tip
-            [0.5, 3.0, 0.0],     # 9: right wing tip
-            [-0.8, -2.0, 0.0],   # 10: left wing trailing
-            [-0.8, 2.0, 0.0],    # 11: right wing trailing
-
-            # Twin tails
-            [-2.5, -0.6, 1.2],   # 12: left vertical tail
-            [-2.5, 0.6, 1.2],    # 13: right vertical tail
-        ])
-
-        # Clean triangular faces
-        self.faces = [
-            # Fuselage top
-            [0, 1, 2], [2, 3, 4],
-
-            # Fuselage bottom
-            [0, 5, 6], [6, 7, 4],
-
-            # Fuselage sides
-            [0, 1, 5], [1, 2, 6], [1, 6, 5],
-            [2, 3, 7], [2, 7, 6], [3, 4, 7],
-
-            # Wings
-            [2, 8, 10], [2, 10, 6], [2, 9, 11], [2, 11, 6],
-            [8, 9, 2], [10, 11, 6],
-
-            # Twin tails
-            [3, 12, 4], [3, 13, 12], [4, 12, 13],
-        ]
-
-
-class B52Bomber3D(Aircraft3D):
-    """3D B-52 bomber aircraft model"""
-
-    def __init__(self):
-        super().__init__("B-52 Stratofortress", "bomber")
-
-    def _create_mesh(self):
-        """Create simple B-52 bomber mesh"""
-        # Long bomber with distinctive swept wings
-        self.vertices = np.array([
-            # Main fuselage
-            [6.0, 0.0, 0.0],     # 0: nose
-            [3.0, 0.0, 0.4],     # 1: forward fuselage
-            [0.0, 0.0, 0.3],     # 2: wing root
-            [-3.0, 0.0, 0.3],    # 3: aft fuselage
-            [-5.5, 0.0, 0.0],    # 4: tail
-
-            # Fuselage bottom
-            [3.0, 0.0, -0.4],    # 5: forward bottom
-            [0.0, 0.0, -0.3],    # 6: wing root bottom
-            [-3.0, 0.0, -0.3],   # 7: aft bottom
-
-            # Long swept wings
-            [1.0, -5.0, 0.1],    # 8: left wing tip
-            [1.0, 5.0, 0.1],     # 9: right wing tip
-            [-1.5, -4.0, 0.0],   # 10: left wing trailing
-            [-1.5, 4.0, 0.0],    # 11: right wing trailing
-
-            # Vertical tail
-            [-4.0, 0.0, 1.5],    # 12: tail top
-        ])
-
-        self.faces = [
-            # Fuselage top
-            [0, 1, 2], [2, 3, 4],
-
-            # Fuselage bottom
-            [0, 5, 6], [6, 7, 4],
-
-            # Fuselage sides
-            [0, 1, 5], [1, 2, 6], [1, 6, 5],
-            [2, 3, 7], [2, 7, 6], [3, 4, 7],
-
-            # Wings (swept)
-            [2, 8, 10], [2, 10, 6], [2, 9, 11], [2, 11, 6],
-            [8, 9, 2], [10, 11, 6],
-
-            # Vertical tail
-            [3, 12, 4], [4, 12, 7], [3, 7, 12],
-        ]
-
-
-class C130Transport3D(Aircraft3D):
-    """3D C-130 transport aircraft model"""
-
-    def __init__(self):
-        super().__init__("C-130 Hercules", "transport")
-
-    def _create_mesh(self):
-        """Create simple C-130 transport mesh"""
-        # High-wing transport aircraft
-        self.vertices = np.array([
-            # Main fuselage
-            [4.5, 0.0, -0.2],    # 0: nose
-            [2.0, 0.0, 0.2],     # 1: cockpit
-            [0.0, 0.0, 0.3],     # 2: cargo area
-            [-2.5, 0.0, 0.2],    # 3: aft fuselage
-            [-4.0, 0.0, 0.0],    # 4: tail
-
-            # Large cargo belly
-            [2.0, 0.0, -0.8],    # 5: cockpit bottom
-            [0.0, 0.0, -1.0],    # 6: cargo belly
-            [-2.5, 0.0, -0.8],   # 7: aft belly
-
-            # High wings (above fuselage)
-            [1.0, -4.5, 1.2],    # 8: left wing tip
-            [1.0, 4.5, 1.2],     # 9: right wing tip
-            [-1.0, -3.5, 0.9],   # 10: left wing trailing
-            [-1.0, 3.5, 0.9],    # 11: right wing trailing
-
-            # T-tail
-            [-3.5, 0.0, 2.0],    # 12: vertical tail top
-            [-3.5, -1.8, 2.0],   # 13: left horizontal tail
-            [-3.5, 1.8, 2.0],    # 14: right horizontal tail
-        ])
-
-        self.faces = [
-            # Fuselage top
-            [0, 1, 2], [2, 3, 4],
-
-            # Large cargo belly
-            [0, 5, 6], [6, 7, 4],
-
-            # Fuselage sides
-            [0, 1, 5], [1, 2, 6], [1, 6, 5],
-            [2, 3, 7], [2, 7, 6], [3, 4, 7],
-
-            # High wings
-            [2, 8, 10], [2, 9, 11], [8, 9, 2], [10, 11, 6],
-
-            # Wing undersides
-            [6, 10, 8], [6, 11, 9], [6, 8, 9], [6, 9, 11],
-
-            # T-tail vertical
-            [3, 12, 4], [4, 12, 7], [3, 7, 12],
-
-            # T-tail horizontal
-            [12, 13, 14],
-        ]
+# Legacy aircraft classes removed - now using provider system
+# See aircraft_toolkit.providers.basic for backward compatibility
 
 
 class Dataset3D:
@@ -255,24 +86,47 @@ class Dataset3D:
         self.include_surface_normals = include_surface_normals
         self.image_size = image_size
 
-        # Initialize 3D aircraft models
+        # Initialize configuration and providers
+        self.config = get_config()
+        self.provider_name = self.config.get_preferred_provider()
+        self.model_provider = get_provider(self.provider_name, self.config.providers.get(self.provider_name, {}).config)
+
+        # Initialize 3D aircraft models using provider system
         self.aircraft_models = self._load_aircraft_models()
 
-        print(f"🛩️  3D Dataset Generator initialized")
+        logger.info(f"3D Dataset Generator initialized with {self.provider_name} provider")
+        logger.info(f"Generating {num_scenes} scenes × {views_per_scene} views = {num_scenes * views_per_scene} total images")
+        print(f"🛩️  3D Dataset Generator initialized with {self.provider_name} provider")
         print(f"📊 {num_scenes} scenes × {views_per_scene} views = {num_scenes * views_per_scene} total images")
 
     def _load_aircraft_models(self) -> Dict:
-        """Load 3D aircraft model definitions"""
+        """Load 3D aircraft model definitions using provider system"""
         models = {}
+
+        # Validate aircraft types with provider
+        supported_aircraft = self.model_provider.get_supported_aircraft()
+
         for aircraft_type in self.aircraft_types:
-            if aircraft_type.upper() == 'F15':
-                models['F15'] = F15Fighter3D()
-            elif aircraft_type.upper() == 'B52':
-                models['B52'] = B52Bomber3D()
-            elif aircraft_type.upper() == 'C130':
-                models['C130'] = C130Transport3D()
-            else:
-                raise ValueError(f"Unknown aircraft type: {aircraft_type}")
+            aircraft_key = aircraft_type.upper()
+            if aircraft_key not in supported_aircraft:
+                logger.warning(f"Aircraft type {aircraft_key} not supported by {self.provider_name} provider")
+                continue
+
+            try:
+                # Generate aircraft mesh using provider
+                mesh = self.model_provider.create_aircraft(
+                    aircraft_key,
+                    detail_level=self.config.aircraft.detail_level
+                )
+                models[aircraft_key] = mesh
+                logger.info(f"Loaded {aircraft_key}: {mesh.num_vertices} vertices, {mesh.num_faces} faces")
+            except Exception as e:
+                logger.error(f"Failed to load {aircraft_key}: {e}")
+                continue
+
+        if not models:
+            raise RuntimeError(f"No aircraft models could be loaded with {self.provider_name} provider")
+
         return models
 
     def generate(self,
@@ -336,8 +190,9 @@ class Dataset3D:
 
         for scene_idx in tqdm(range(num_scenes), desc=f"Generating {split_name}"):
             # Random aircraft type and pose
-            aircraft_type = np.random.choice(self.aircraft_types)
-            aircraft_model = self.aircraft_models[aircraft_type]
+            available_types = list(self.aircraft_models.keys())
+            aircraft_type = np.random.choice(available_types)
+            aircraft_mesh = self.aircraft_models[aircraft_type]
 
             # Random aircraft pose
             aircraft_pose = self._generate_random_aircraft_pose()
@@ -347,7 +202,7 @@ class Dataset3D:
 
             for view_idx, camera in enumerate(scene_cameras):
                 # Render the view
-                image, depth_map = self._render_view(aircraft_model, aircraft_pose, camera)
+                image, depth_map = self._render_view(aircraft_mesh, aircraft_pose, camera)
 
                 # Save images
                 image_filename = f"{split_name}_{scene_idx:06d}_{view_idx:02d}.png"
@@ -410,25 +265,25 @@ class Dataset3D:
 
         return cameras
 
-    def _render_view(self, aircraft_model: Aircraft3D, aircraft_pose: Dict, camera: Camera) -> Tuple[Image.Image, Optional[Image.Image]]:
+    def _render_view(self, aircraft_mesh, aircraft_pose: Dict, camera: Camera) -> Tuple[Image.Image, Optional[Image.Image]]:
         """Render aircraft from camera viewpoint"""
         # Create rendered image
         image = Image.new('RGB', self.image_size, color=(135, 206, 235))  # Sky blue
         draw = ImageDraw.Draw(image)
 
         # Transform aircraft vertices to camera space
-        transformed_vertices = self._transform_vertices(aircraft_model.vertices, aircraft_pose, camera)
+        transformed_vertices = self._transform_vertices(aircraft_mesh.vertices, aircraft_pose, camera)
 
         # Project 3D points to 2D screen coordinates
         projected_points = self._project_to_screen(transformed_vertices)
 
         # Render faces
-        self._render_faces(draw, aircraft_model.faces, projected_points, transformed_vertices)
+        self._render_faces(draw, aircraft_mesh.faces, projected_points, transformed_vertices)
 
         # Generate depth map if requested
         depth_map = None
         if self.include_depth_maps:
-            depth_map = self._generate_depth_map(transformed_vertices, aircraft_model.faces)
+            depth_map = self._generate_depth_map(transformed_vertices, aircraft_mesh.faces)
 
         return image, depth_map
 

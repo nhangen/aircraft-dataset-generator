@@ -1,0 +1,201 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<cpacs xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xsi:noNamespaceSchemaLocation="cpacs_schema.xsd">
+  <header>
+    <name>F-15 Eagle</name>
+    <description>F-15 Eagle twin-engine fighter aircraft</description>
+  </header>
+  <vehicles>
+    <aircraft>
+      <model uID="F15_model">
+        <name>F-15 Eagle</name>
+        <fuselages>
+          <fuselage uID="fuselage1">
+            <name>Main Fuselage</name>
+            <sections>
+              <section uID="nose_section">
+                <elements>
+                  <element uID="nose">
+                    <transformation>
+                      <translation x="0" y="0" z="0"/>
+                    </transformation>
+                    <profileUID>circle_profile</profileUID>
+                  </element>
+                </elements>
+              </section>
+              <section uID="cockpit_section">
+                <elements>
+                  <element uID="cockpit">
+                    <transformation>
+                      <translation x="4" y="0" z="0.3"/>
+                    </transformation>
+                    <profileUID>ellipse_profile</profileUID>
+                  </element>
+                </elements>
+              </section>
+              <section uID="main_section">
+                <elements>
+                  <element uID="main_body">
+                    <transformation>
+                      <translation x="8" y="0" z="0"/>
+                    </transformation>
+                    <profileUID>rectangle_profile</profileUID>
+                  </element>
+                </elements>
+              </section>
+              <section uID="tail_section">
+                <elements>
+                  <element uID="tail">
+                    <transformation>
+                      <translation x="15" y="0" z="0"/>
+                    </transformation>
+                    <profileUID>circle_profile</profileUID>
+                  </element>
+                </elements>
+              </section>
+            </sections>
+            <positionings>
+              <positioning uID="nose_to_cockpit">
+                <fromSectionUID>nose_section</fromSectionUID>
+                <toSectionUID>cockpit_section</toSectionUID>
+              </positioning>
+              <positioning uID="cockpit_to_main">
+                <fromSectionUID>cockpit_section</fromSectionUID>
+                <toSectionUID>main_section</toSectionUID>
+              </positioning>
+              <positioning uID="main_to_tail">
+                <fromSectionUID>main_section</fromSectionUID>
+                <toSectionUID>tail_section</toSectionUID>
+              </positioning>
+            </positionings>
+          </fuselage>
+        </fuselages>
+        <wings>
+          <wing uID="main_wing">
+            <name>Main Wing</name>
+            <sections>
+              <section uID="wing_root">
+                <elements>
+                  <element uID="root_element">
+                    <transformation>
+                      <translation x="6" y="0" z="0"/>
+                    </transformation>
+                    <profileUID>naca0012</profileUID>
+                  </element>
+                </elements>
+              </section>
+              <section uID="wing_tip">
+                <elements>
+                  <element uID="tip_element">
+                    <transformation>
+                      <translation x="8" y="7" z="0"/>
+                      <rotation x="0" y="0" z="-20"/>
+                    </transformation>
+                    <profileUID>naca0009</profileUID>
+                  </element>
+                </elements>
+              </section>
+            </sections>
+            <positionings>
+              <positioning uID="root_to_tip">
+                <fromSectionUID>wing_root</fromSectionUID>
+                <toSectionUID>wing_tip</toSectionUID>
+                <sweepAngle>25</sweepAngle>
+              </positioning>
+            </positionings>
+          </wing>
+          <wing uID="vertical_stabilizer_left">
+            <name>Left Vertical Stabilizer</name>
+            <sections>
+              <section uID="vstab_root_l">
+                <elements>
+                  <element uID="vstab_root_element_l">
+                    <transformation>
+                      <translation x="13" y="-0.8" z="0.5"/>
+                    </transformation>
+                    <profileUID>naca0012</profileUID>
+                  </element>
+                </elements>
+              </section>
+              <section uID="vstab_tip_l">
+                <elements>
+                  <element uID="vstab_tip_element_l">
+                    <transformation>
+                      <translation x="14" y="-0.8" z="3"/>
+                      <rotation x="0" y="10" z="0"/>
+                    </transformation>
+                    <profileUID>naca0009</profileUID>
+                  </element>
+                </elements>
+              </section>
+            </sections>
+          </wing>
+          <wing uID="vertical_stabilizer_right">
+            <name>Right Vertical Stabilizer</name>
+            <sections>
+              <section uID="vstab_root_r">
+                <elements>
+                  <element uID="vstab_root_element_r">
+                    <transformation>
+                      <translation x="13" y="0.8" z="0.5"/>
+                    </transformation>
+                    <profileUID>naca0012</profileUID>
+                  </element>
+                </elements>
+              </section>
+              <section uID="vstab_tip_r">
+                <elements>
+                  <element uID="vstab_tip_element_r">
+                    <transformation>
+                      <translation x="14" y="0.8" z="3"/>
+                      <rotation x="0" y="-10" z="0"/>
+                    </transformation>
+                    <profileUID>naca0009</profileUID>
+                  </element>
+                </elements>
+              </section>
+            </sections>
+          </wing>
+        </wings>
+        <profiles>
+          <fuselageProfiles>
+            <fuselageProfile uID="circle_profile">
+              <pointList>
+                <x>1 0.5 0 -0.5 -1 -0.5 0 0.5 1</x>
+                <y>0 0.5 1 0.5 0 -0.5 -1 -0.5 0</y>
+              </pointList>
+            </fuselageProfile>
+            <fuselageProfile uID="ellipse_profile">
+              <pointList>
+                <x>1.5 0.75 0 -0.75 -1.5 -0.75 0 0.75 1.5</x>
+                <y>0 0.5 1 0.5 0 -0.5 -1 -0.5 0</y>
+              </pointList>
+            </fuselageProfile>
+            <fuselageProfile uID="rectangle_profile">
+              <pointList>
+                <x>1.2 1.2 -1.2 -1.2 1.2</x>
+                <y>0.8 -0.8 -0.8 0.8 0.8</y>
+              </pointList>
+            </fuselageProfile>
+          </fuselageProfiles>
+          <wingAirfoils>
+            <wingAirfoil uID="naca0012">
+              <name>NACA 0012</name>
+              <pointList>
+                <x>1.0 0.95 0.9 0.8 0.7 0.6 0.5 0.4 0.3 0.2 0.1 0.05 0 0.05 0.1 0.2 0.3 0.4 0.5 0.6 0.7 0.8 0.9 0.95 1.0</x>
+                <y>0 0.015 0.025 0.04 0.05 0.055 0.06 0.055 0.05 0.04 0.025 0.015 0 -0.015 -0.025 -0.04 -0.05 -0.055 -0.06 -0.055 -0.05 -0.04 -0.025 -0.015 0</y>
+              </pointList>
+            </wingAirfoil>
+            <wingAirfoil uID="naca0009">
+              <name>NACA 0009</name>
+              <pointList>
+                <x>1.0 0.95 0.9 0.8 0.7 0.6 0.5 0.4 0.3 0.2 0.1 0.05 0 0.05 0.1 0.2 0.3 0.4 0.5 0.6 0.7 0.8 0.9 0.95 1.0</x>
+                <y>0 0.012 0.02 0.032 0.04 0.044 0.045 0.044 0.04 0.032 0.02 0.012 0 -0.012 -0.02 -0.032 -0.04 -0.044 -0.045 -0.044 -0.04 -0.032 -0.02 -0.012 0</y>
+              </pointList>
+            </wingAirfoil>
+          </wingAirfoils>
+        </profiles>
+      </model>
+    </aircraft>
+  </vehicles>
+</cpacs>

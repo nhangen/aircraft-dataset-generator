@@ -37,6 +37,7 @@ setup(
         "opencv-python>=4.5.0",
         "scikit-image>=0.18.0",
         "tqdm>=4.62.0",
+        "trimesh>=3.20.0",
     ],
     extras_require={
         "dev": [
@@ -45,6 +46,13 @@ setup(
             "black>=21.0.0",
             "flake8>=3.9.0",
             "mypy>=0.910",
+        ],
+        "tigl": [
+            # TiGL must be installed via conda: conda install -c dlr-sc tigl3
+            # This extra just documents the dependency
+        ],
+        "all": [
+            # All optional dependencies
         ],
     },
     entry_points={
