@@ -8,7 +8,7 @@ aircraft-data-toolkit/
 ├── LICENSE                   # MIT license
 ├── setup.py                  # Package installation
 ├── requirements.txt          # Dependencies
-├── examples/                 # Usage examples
+├── example_scripts/          # Usage examples
 │   ├── basic_2d_generation.py
 │   ├── advanced_3d_generation.py
 │   ├── custom_aircraft_model.py
@@ -83,7 +83,7 @@ aircraft-data-toolkit/
 └── data/                    # Sample data and templates
     ├── aircraft_templates/   # Aircraft shape templates
     ├── backgrounds/         # Background images
-    └── examples/            # Example datasets
+    └── example_scripts/     # Example datasets
 ```
 
 ## Core Components

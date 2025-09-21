@@ -5,10 +5,8 @@ matplotlib>=3.5.0
 opencv-python>=4.5.0
 scikit-image>=0.18.0
 tqdm>=4.62.0
+trimesh>=3.20.0
+scipy>=1.7.0
 
-# Optional dependencies for advanced providers
-# Install with: pip install aircraft-dataset-generator[tigl]
-trimesh>=3.20.0  # For STL mesh loading/processing
-
-# TiGL provider (install separately with conda)
-# conda install -c dlr-sc tigl3
+# High-quality 3D aircraft modeling
+pyvista>=0.40.0

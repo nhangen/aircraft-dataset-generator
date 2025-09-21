@@ -26,18 +26,22 @@ Usage:
 
 from .base import ModelProvider, AircraftMesh
 from .basic import BasicProvider
-from .tigl_provider import TiGLProvider
 from .registry import ProviderRegistry, get_provider, register_provider, list_providers
+
+# Try to register PyVista provider
+try:
+    from .pyvista_models_provider import PyVistaModelsProvider
+    register_provider('pyvista', PyVistaModelsProvider)
+except ImportError:
+    pass
 
 # Register default providers
 register_provider('basic', BasicProvider)
-register_provider('tigl', TiGLProvider)
 
 __all__ = [
     'ModelProvider',
     'AircraftMesh',
     'BasicProvider',
-    'TiGLProvider',
     'get_provider',
     'register_provider',
     'list_providers',

@@ -1,231 +1,159 @@
-# Aircraft Data Generation Toolkit
+# Aircraft Dataset Generator
 
-A comprehensive toolkit for generating synthetic aircraft datasets for machine learning applications with **modular 3D model providers** for high-quality, realistic aircraft geometry.
-
-## 🆕 **TiGL Integration** - Professional-Grade Aircraft Models
-
-This toolkit now supports **TiGL (TiGL Geometry Library)** for generating **NURBS-based, parametric aircraft models** with **100x-1000x** more detail than basic hand-coded meshes.
-
-### Quality Comparison
-
-| Provider | Vertices | Quality | Use Case |
-|----------|----------|---------|----------|
-| **Basic** | ~14 | Hand-coded approximation | Quick prototyping, TiGL unavailable |
-| **TiGL** | 1,000-10,000+ | Professional NURBS geometry | Production ML training |
+A comprehensive toolkit for generating synthetic aircraft datasets for machine learning applications using **real 3D aircraft models** and PyVista rendering.
 
 ## Features
 
-- **🚀 Modular Provider System**: Switch between Basic and TiGL providers seamlessly
-- **🛩️ Professional Aircraft Models**: CPACS-based parametric F-15, B-52, C-130 models
-- **🎯 Multiple Detail Levels**: Low/Medium/High quality settings for different use cases
-- **🔄 Automatic Fallback**: Gracefully degrades to basic models if TiGL unavailable
-- **2D Aircraft Generation**: Silhouette-based pose estimation datasets
-- **3D Multi-view Generation**: Multi-camera aircraft datasets with depth maps
-- **Flexible Annotations**: COCO, YOLO, Pascal VOC format support
-- **🏗️ Extensible Architecture**: Easy to add custom aircraft models and providers
+- **🛩️ Real Aircraft Models**: F-15 Eagle (50K vertices), B-52 Stratofortress (21K vertices), C-130 Hercules (97K vertices)
+- **📊 Multiple Formats**: 2D silhouettes, 3D multi-view, baseline wireframes
+- **🎯 High Quality**: PyVista rendering with proper lighting, shading, and surfaces
+- **🚀 Ready to Use**: 60 sample images included (10 per aircraft × 6 categories)
+- **📁 Flexible Output**: COCO, YOLO, Pascal VOC annotations
+- **🔧 Extensible**: Add custom STL/OBJ/GLB aircraft models
 
 ## Quick Start
 
-### Basic Installation
+### Installation
 ```bash
+# Install dependencies
+pip install pyvista
+pip install -e .
+
+# Or use conda environment
+conda env create -f environment.yml
+conda activate aircraft-toolkit
 pip install -e .
 ```
 
-### TiGL Provider (Optional - for High-Quality Models)
-```bash
-conda install -c dlr-sc tigl3
-```
+### Generate Datasets
 
-### Generate High-Quality Dataset
+**3D Multi-view (Recommended)**
 ```python
 from aircraft_toolkit import Dataset3D
 
-# Automatic provider selection (TiGL if available, Basic otherwise)
 dataset = Dataset3D(
     aircraft_types=['F15', 'B52', 'C130'],
-    num_scenes=1000,
+    num_scenes=100,
     views_per_scene=8,
     image_size=(512, 512)
 )
 results = dataset.generate('output/aircraft_3d')
-print(f"Generated with {dataset.provider_name} provider")
 ```
 
-### Provider Selection
-```python
-from aircraft_toolkit.config import get_config_manager
-
-# Force specific provider
-config_mgr = get_config_manager()
-config = config_mgr.get_config()
-config.aircraft.model_provider = 'tigl'  # or 'basic'
-config.aircraft.detail_level = 'high'    # 'low', 'medium', 'high'
-config_mgr.save_config(config)
-
-dataset = Dataset3D(aircraft_types=['F15'])
-```
-
-### Legacy 2D Generation (Unchanged)
+**2D Silhouettes**
 ```python
 from aircraft_toolkit import Dataset2D
 
 dataset = Dataset2D(
     aircraft_types=['F15', 'B52', 'C130'],
-    num_samples=10000,
+    num_samples=1000,
     image_size=(224, 224)
 )
-dataset.generate('output/aircraft_2d')
+results = dataset.generate('output/aircraft_2d')
 ```
 
-## 🏗️ Architecture
+### View Sample Images
+Check `sample_images/` for examples of all output types.
 
-### Modular Provider System
-```
-aircraft_toolkit/
-├── providers/           # Pluggable 3D model backends
-│   ├── basic.py        # Hand-coded models (backward compatible)
-│   ├── tigl_provider.py # TiGL CPACS-based models
-│   └── base.py         # Abstract provider interface
-├── config.py           # Configuration management
-└── core/
-    ├── dataset_2d.py   # 2D dataset generation
-    └── dataset_3d.py   # 3D dataset generation (updated)
-```
+## Sample Images
 
-### Provider Capabilities
-
-| Feature | Basic Provider | TiGL Provider |
-|---------|----------------|---------------|
-| Dependencies | None | TiGL + CPACS |
-| Aircraft Detail | Low (~14 vertices) | High (1000+ vertices) |
-| Surface Quality | Faceted | NURBS smooth |
-| Parametric | No | Yes (CPACS files) |
-| Detail Levels | 1 (low) | 3 (low/med/high) |
-| Generation Speed | ~0.1ms | ~100ms-2s |
-
-## 📊 Performance & Quality
-
-### Mesh Quality Improvements
-- **F-15**: 14 → 5,000+ vertices (**357x improvement**)
-- **B-52**: 13 → 4,000+ vertices (**308x improvement**)
-- **C-130**: 15 → 6,000+ vertices (**400x improvement**)
-
-### Training Impact
-- **Better Features**: Realistic aircraft proportions and details
-- **Improved Generalization**: NURBS-based smooth surfaces
-- **Configurable Quality**: Adjust detail level for computational budget
-
-## 🚀 Examples
-
-### Basic Usage (Backward Compatible)
-```python
-# Your existing code works unchanged!
-from aircraft_toolkit import Dataset3D
-
-dataset = Dataset3D(aircraft_types=['F15'])
-dataset.generate('output/dataset')
-```
-
-### Advanced Configuration
-```python
-from aircraft_toolkit.providers import get_provider
-
-# Direct provider usage
-provider = get_provider('tigl')
-mesh = provider.create_aircraft('F15', detail_level='high')
-print(f"Generated {mesh.num_vertices} vertices, {mesh.num_faces} faces")
-```
-
-### Quality Comparison
-```python
-# Compare providers
-basic_provider = get_provider('basic')
-tigl_provider = get_provider('tigl')
-
-basic_mesh = basic_provider.create_aircraft('F15')
-tigl_mesh = tigl_provider.create_aircraft('F15', detail_level='medium')
-
-print(f"Basic: {basic_mesh.num_vertices} vertices")
-print(f"TiGL: {tigl_mesh.num_vertices} vertices")
-print(f"Improvement: {tigl_mesh.num_vertices / basic_mesh.num_vertices:.0f}x")
-```
-
-## 📁 Repository Structure
+The repository includes 60 sample images organized by type:
 
 ```
-aircraft-dataset-generator/
-├── aircraft_toolkit/           # Main package
-│   ├── providers/             # Modular provider system
-│   ├── core/                  # Dataset generation
-│   └── config.py              # Configuration management
-├── examples/                  # Usage examples
-│   ├── basic_3d_generation.py
-│   ├── tigl_test_generation.py
-│   └── integration_comparison.py
-├── tests/                     # Test suite
-├── samples/                   # Generated sample datasets
-├── TIGL_INTEGRATION.md        # Complete TiGL guide
-├── INTEGRATION_PLAN.md        # Implementation details
-└── README.md                  # This file
+sample_images/
+├── 2d/                    # 2D silhouette samples
+│   ├── F15/              # f15_2d_01.png → f15_2d_10.png
+│   ├── B52/              # b52_2d_01.png → b52_2d_10.png
+│   └── C130/             # c130_2d_01.png → c130_2d_10.png
+└── 3d/                    # 3D rendered samples
+    ├── baseline/          # Original wireframe samples
+    │   ├── F15/          # f15_baseline_01.png → f15_baseline_10.png
+    │   ├── B52/          # b52_baseline_01.png → b52_baseline_10.png
+    │   └── C130/         # c130_baseline_01.png → c130_baseline_10.png
+    └── pyvista/          # Real aircraft models
+        ├── F15/          # f15_real_01.png → f15_real_10.png
+        ├── B52/          # b52_real_01.png → b52_real_10.png
+        └── C130/         # c130_real_01.png → c130_real_10.png
 ```
 
-## 📚 Documentation
+## Aircraft Models
 
-- **[TiGL Integration Guide](TIGL_INTEGRATION.md)**: Complete setup and usage guide
-- **[Integration Plan](INTEGRATION_PLAN.md)**: Technical implementation details
-- **[Architecture Documentation](docs/architecture.md)**: Framework design
-- **Examples**: See `examples/` directory for working code samples
+**Real 3D Models Included:**
+- **F-15 Eagle**: McDonnell Douglas F-15E Strike Eagle (50,637 vertices)
+- **B-52 Stratofortress**: Boeing B-52 strategic bomber (21,392 vertices)
+- **C-130 Hercules**: Lockheed C-130 transport aircraft (96,662 vertices)
 
-## 🔧 Migration Guide
+**Model Sources:**
+Models are automatically loaded from `models/aircraft/`:
+- `f15.glb` - F-15E Strike Eagle
+- `b52.glb` - B-52 Stratofortress
+- `c130.obj` - C-130 Hercules
 
-### From Previous Versions
-Your existing code continues to work unchanged:
+## Adding Custom Models
 
-```python
-# OLD CODE - STILL WORKS
-dataset = Dataset3D(aircraft_types=['F15'])
-dataset.generate('output')
+1. Download STL/OBJ/GLB aircraft models
+2. Place in `models/aircraft/` with aircraft type names:
+   ```
+   models/aircraft/
+   ├── f15.stl      # Will be used for F-15
+   ├── b52.obj      # Will be used for B-52
+   └── c130.glb     # Will be used for C-130
+   ```
+3. Models are automatically detected and used
 
-# NEW FEATURES - OPTIONAL
-# Automatically uses TiGL if available for better quality
-```
+**Model Sources:**
+- [Printables.com](https://www.printables.com/search/models?q=military%20aircraft)
+- [GrabCAD](https://grabcad.com/library?query=military%20aircraft)
+- [Thingiverse](https://www.thingiverse.com/search?q=aircraft)
 
-### Upgrading to TiGL
-1. **Install TiGL**: `conda install -c dlr-sc tigl3`
-2. **Run existing code**: Automatically uses TiGL
-3. **Configure quality**: Set detail level in config
-4. **Enjoy**: 100x+ better mesh quality
+## Development
 
-## 🧪 Testing
-
+### Example Scripts
 ```bash
-# Run test suite
-python -m pytest tests/ -v
+# Generate examples
+python example_scripts/generate_examples.py --mode 3d
 
-# Generate test datasets
-python examples/tigl_test_generation.py
-
-# Compare providers
-python examples/integration_comparison.py
+# Test specific aircraft
+python example_scripts/generate_examples.py --mode test
 ```
 
-## 🤝 Contributing
+### Provider Architecture
+The system uses a modular provider architecture:
+- **Basic Provider**: Wireframe fallback (14 vertices)
+- **PyVista Provider**: Real 3D models (20K-97K vertices)
 
-We welcome contributions! The modular provider system makes it easy to add new 3D model backends:
+Priority: Custom models → Real models → Basic wireframes
 
-1. Implement `ModelProvider` interface
-2. Register provider in `__init__.py`
-3. Add tests and documentation
-4. Submit PR
+## Output Structure
 
-Potential providers: CadQuery, Open3D, FreeCAD, OpenSCAD
+Generated datasets follow this structure:
+```
+output/
+├── train/
+│   ├── images/           # RGB images (PNG)
+│   ├── depth/           # Depth maps (optional)
+│   └── annotations.json # COCO format annotations
+├── val/
+└── test/
+```
 
-## 📄 License
+**Annotations include:**
+- Aircraft pose (rotation, translation)
+- Camera parameters
+- Bounding boxes
+- Aircraft type labels
 
-MIT License - See LICENSE file for details.
+## Requirements
 
-## 🙏 Acknowledgments
+**Core Dependencies:**
+- Python 3.9+
+- PyVista 0.40+
+- NumPy, Pillow, OpenCV
+- Trimesh, SciPy
 
-- **TiGL Team**: For the excellent CPACS-based aircraft geometry library
-- **OpenCASCADE**: For the underlying CAD kernel
-- **Aerospace Community**: For CPACS standards and aircraft data
+**Optional:**
+- Custom STL/OBJ/GLB aircraft models
+
+## License
+
+This toolkit is for educational and research purposes. Aircraft models are from public sources with appropriate attribution.

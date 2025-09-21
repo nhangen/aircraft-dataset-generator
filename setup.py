@@ -48,7 +48,7 @@ setup(
             "mypy>=0.910",
         ],
         "tigl": [
-            # TiGL must be installed via conda: conda install -c dlr-sc tigl3
+            # TiGL must be installed via conda: conda install -c dlr-sc tigl=3.3.0
             # This extra just documents the dependency
         ],
         "all": [

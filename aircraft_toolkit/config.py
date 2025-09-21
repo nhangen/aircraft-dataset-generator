@@ -69,24 +69,28 @@ class Config:
 
     def _get_default_providers(self) -> Dict[str, ProviderConfig]:
         """Get default provider configurations."""
-        return {
+        providers = {
             'basic': ProviderConfig(
                 name='basic',
                 enabled=True,
                 priority=1,
                 detail_level='low'
-            ),
-            'tigl': ProviderConfig(
-                name='tigl',
-                enabled=True,
-                priority=10,  # Higher priority than basic
-                detail_level='medium',
-                config={
-                    'cache_cpacs_files': True,
-                    'export_format': 'stl',
-                }
             )
         }
+
+        # Add PyVista provider if available
+        try:
+            import pyvista
+            providers['pyvista'] = ProviderConfig(
+                name='pyvista',
+                enabled=True,
+                priority=100,  # Highest priority - uses real models
+                detail_level='high'
+            )
+        except ImportError:
+            pass
+
+        return providers
 
     def get_preferred_provider(self) -> str:
         """

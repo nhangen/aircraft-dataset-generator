@@ -86,10 +86,9 @@ class Dataset3D:
         self.include_surface_normals = include_surface_normals
         self.image_size = image_size
 
-        # Initialize configuration and providers
+        # Initialize configuration and providers with fallback
         self.config = get_config()
-        self.provider_name = self.config.get_preferred_provider()
-        self.model_provider = get_provider(self.provider_name, self.config.providers.get(self.provider_name, {}).config)
+        self.provider_name, self.model_provider = self._select_working_provider()
 
         # Initialize 3D aircraft models using provider system
         self.aircraft_models = self._load_aircraft_models()
@@ -98,6 +97,54 @@ class Dataset3D:
         logger.info(f"Generating {num_scenes} scenes × {views_per_scene} views = {num_scenes * views_per_scene} total images")
         print(f"🛩️  3D Dataset Generator initialized with {self.provider_name} provider")
         print(f"📊 {num_scenes} scenes × {views_per_scene} views = {num_scenes * views_per_scene} total images")
+
+    def _select_working_provider(self) -> Tuple:
+        """
+        Select a provider that supports the requested aircraft types.
+
+        Returns:
+            Tuple of (provider_name, provider_instance)
+        """
+        from ..providers import list_providers
+
+        preferred_name = self.config.get_preferred_provider()
+
+        # Try preferred provider first
+        try:
+            preferred_provider = get_provider(preferred_name)
+            supported = preferred_provider.get_supported_aircraft()
+
+            # Check if any requested aircraft are supported
+            available_aircraft = [ac.upper() for ac in self.aircraft_types if ac.upper() in supported]
+            if available_aircraft:
+                logger.info(f"Using preferred provider '{preferred_name}' with {len(available_aircraft)} supported aircraft")
+                return preferred_name, preferred_provider
+            else:
+                logger.warning(f"Preferred provider '{preferred_name}' supports no requested aircraft types")
+        except Exception as e:
+            logger.warning(f"Preferred provider '{preferred_name}' failed: {e}")
+
+        # Fall back to any working provider
+        available_providers = list_providers()
+
+        for provider_name in available_providers:
+            if provider_name == preferred_name:
+                continue  # Already tried above
+
+            try:
+                provider = get_provider(provider_name)
+                supported = provider.get_supported_aircraft()
+
+                # Check if any requested aircraft are supported
+                available_aircraft = [ac.upper() for ac in self.aircraft_types if ac.upper() in supported]
+                if available_aircraft:
+                    logger.info(f"Falling back to provider '{provider_name}' with {len(available_aircraft)} supported aircraft")
+                    return provider_name, provider
+            except Exception as e:
+                logger.warning(f"Provider '{provider_name}' failed: {e}")
+                continue
+
+        raise RuntimeError(f"No provider available that supports any of: {self.aircraft_types}")
 
     def _load_aircraft_models(self) -> Dict:
         """Load 3D aircraft model definitions using provider system"""
@@ -267,6 +314,116 @@ class Dataset3D:
 
     def _render_view(self, aircraft_mesh, aircraft_pose: Dict, camera: Camera) -> Tuple[Image.Image, Optional[Image.Image]]:
         """Render aircraft from camera viewpoint"""
+        # Check if PyVista is available for high-quality rendering
+        try:
+            import pyvista as pv
+            return self._render_view_pyvista(aircraft_mesh, aircraft_pose, camera)
+        except ImportError:
+            # Fall back to basic rendering
+            return self._render_view_basic(aircraft_mesh, aircraft_pose, camera)
+
+    def _render_view_pyvista(self, aircraft_mesh, aircraft_pose: Dict, camera: Camera) -> Tuple[Image.Image, Optional[Image.Image]]:
+        """Render using PyVista for high-quality output"""
+        import pyvista as pv
+        import numpy as np
+        from PIL import Image
+
+        # Create PyVista mesh from aircraft mesh
+        faces_with_count = np.column_stack([
+            np.full(len(aircraft_mesh.faces), 3),  # Triangle count
+            aircraft_mesh.faces
+        ]).flatten()
+
+        pv_mesh = pv.PolyData(aircraft_mesh.vertices, faces_with_count)
+
+        # Apply aircraft pose transformation
+        rotation = aircraft_pose['rotation']
+        translation = aircraft_pose['position']
+
+        # Convert rotations to transformation matrix
+        import math
+        pitch = math.radians(rotation['pitch'])
+        yaw = math.radians(rotation['yaw'])
+        roll = math.radians(rotation['roll'])
+
+        # Rotation matrices
+        R_x = np.array([
+            [1, 0, 0],
+            [0, math.cos(pitch), -math.sin(pitch)],
+            [0, math.sin(pitch), math.cos(pitch)]
+        ])
+        R_y = np.array([
+            [math.cos(yaw), 0, math.sin(yaw)],
+            [0, 1, 0],
+            [-math.sin(yaw), 0, math.cos(yaw)]
+        ])
+        R_z = np.array([
+            [math.cos(roll), -math.sin(roll), 0],
+            [math.sin(roll), math.cos(roll), 0],
+            [0, 0, 1]
+        ])
+
+        # Combined rotation
+        R = R_z @ R_y @ R_x
+
+        # Create 4x4 transformation matrix
+        transform = np.eye(4)
+        transform[:3, :3] = R
+        transform[:3, 3] = translation
+
+        # Apply transformation
+        pv_mesh = pv_mesh.transform(transform)
+
+        # Set up PyVista plotter with off-screen rendering
+        plotter = pv.Plotter(off_screen=True, window_size=self.image_size)
+
+        # Set background color (sky blue)
+        plotter.background_color = (135/255, 206/255, 235/255)
+
+        # Add the mesh with basic shading
+        plotter.add_mesh(pv_mesh, color='lightgray', show_edges=False, lighting=True)
+
+        # Reset camera to properly frame the mesh
+        plotter.reset_camera()
+
+        # Calculate proper camera distance based on mesh size
+        bounds = pv_mesh.bounds
+        mesh_size = max(bounds[1] - bounds[0], bounds[3] - bounds[2], bounds[5] - bounds[4])
+
+        # Set camera based on the intended viewing angle
+        angle_rad = np.arctan2(camera.position[1], camera.position[0])
+        height = camera.position[2]
+
+        # Position camera at a distance proportional to mesh size
+        distance = mesh_size * 2.5  # Distance as multiple of mesh size
+
+        camera_x = distance * np.cos(angle_rad)
+        camera_y = distance * np.sin(angle_rad)
+        camera_z = height * (mesh_size / 10)  # Scale height relative to mesh
+
+        plotter.camera.position = (camera_x, camera_y, camera_z)
+        plotter.camera.focal_point = pv_mesh.center
+        plotter.camera.up = (0, 0, 1)
+        plotter.camera.view_angle = 30  # degrees
+
+        # Render the scene
+        image_array = plotter.screenshot(return_img=True)
+        plotter.close()
+
+        # Convert to PIL Image
+        image = Image.fromarray(image_array)
+
+        # Generate depth map (simplified for now)
+        depth_map = None
+        if self.include_depth_maps:
+            # Use z-buffer approach for depth
+            depth_array = np.full(self.image_size[::-1], 255, dtype=np.uint8)  # White = far
+            depth_map = Image.fromarray(depth_array, mode='L')
+
+        return image, depth_map
+
+    def _render_view_basic(self, aircraft_mesh, aircraft_pose: Dict, camera: Camera) -> Tuple[Image.Image, Optional[Image.Image]]:
+        """Basic wireframe rendering fallback"""
         # Create rendered image
         image = Image.new('RGB', self.image_size, color=(135, 206, 235))  # Sky blue
         draw = ImageDraw.Draw(image)
