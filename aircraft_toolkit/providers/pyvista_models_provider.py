@@ -97,7 +97,7 @@ class PyVistaModelsProvider(ModelProvider):
 
         return self._pyvista_to_aircraft_mesh(mesh, aircraft_type)
 
-    def _load_aircraft_model(self, aircraft_type: str) -> pv.PolyData:
+    def _load_aircraft_model(self, aircraft_type: str):
         """Load aircraft model from file or use built-in."""
         # First try to load custom model file
         custom_model = self._try_load_custom_model(aircraft_type)
@@ -110,7 +110,7 @@ class PyVistaModelsProvider(ModelProvider):
 
         raise ValueError(f"No model available for aircraft type: {aircraft_type}")
 
-    def _try_load_custom_model(self, aircraft_type: str) -> Optional[pv.PolyData]:
+    def _try_load_custom_model(self, aircraft_type: str):
         """Try to load a custom model file."""
         models_path = Path(self.models_dir)
 
@@ -129,7 +129,7 @@ class PyVistaModelsProvider(ModelProvider):
                     # Convert to PolyData if needed
                     if hasattr(mesh, 'extract_surface'):
                         mesh = mesh.extract_surface()
-                    elif not isinstance(mesh, pv.PolyData):
+                    elif PYVISTA_AVAILABLE and not isinstance(mesh, pv.PolyData):
                         mesh = mesh.cast_to_polydata()
                     logger.info(f"Loaded custom model: {model_file}")
                     return mesh
@@ -138,7 +138,7 @@ class PyVistaModelsProvider(ModelProvider):
 
         return None
 
-    def _create_builtin_variant(self, aircraft_type: str) -> pv.PolyData:
+    def _create_builtin_variant(self, aircraft_type: str):
         """Create a variant of the built-in airplane model."""
         # Load the built-in airplane
         airplane = examples.load_airplane()
@@ -158,7 +158,7 @@ class PyVistaModelsProvider(ModelProvider):
 
         return airplane
 
-    def _apply_aircraft_specific_transforms(self, mesh: pv.PolyData, aircraft_type: str) -> pv.PolyData:
+    def _apply_aircraft_specific_transforms(self, mesh, aircraft_type: str):
         """Apply any specific transformations for the aircraft type."""
         # Rotate to standard orientation (nose pointing in +X direction)
         # PyVista's airplane is oriented differently, so we need to rotate it
@@ -179,7 +179,7 @@ class PyVistaModelsProvider(ModelProvider):
 
         return mesh
 
-    def _pyvista_to_aircraft_mesh(self, pv_mesh: pv.PolyData, aircraft_type: str) -> AircraftMesh:
+    def _pyvista_to_aircraft_mesh(self, pv_mesh, aircraft_type: str) -> AircraftMesh:
         """Convert PyVista mesh to AircraftMesh format."""
         # Get vertices and faces
         vertices = np.array(pv_mesh.points)

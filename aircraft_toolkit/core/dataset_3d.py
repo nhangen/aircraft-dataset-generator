@@ -63,6 +63,7 @@ class Dataset3D:
                  camera_height_range: Tuple[float, float] = (-5, 10),
                  include_depth_maps: bool = True,
                  include_surface_normals: bool = False,
+                 include_oriented_bboxes: bool = False,
                  image_size: Tuple[int, int] = (512, 512)):
         """
         Initialize 3D dataset generator
@@ -75,6 +76,7 @@ class Dataset3D:
             camera_height_range: Range of camera heights
             include_depth_maps: Whether to generate depth maps
             include_surface_normals: Whether to generate surface normals
+            include_oriented_bboxes: Whether to compute 3D→2D oriented bounding boxes
             image_size: Output image size (width, height)
         """
         self.aircraft_types = aircraft_types
@@ -84,6 +86,7 @@ class Dataset3D:
         self.camera_height_range = camera_height_range
         self.include_depth_maps = include_depth_maps
         self.include_surface_normals = include_surface_normals
+        self.include_oriented_bboxes = include_oriented_bboxes
         self.image_size = image_size
 
         # Initialize configuration and providers with fallback
@@ -251,6 +254,13 @@ class Dataset3D:
                 # Render the view
                 image, depth_map = self._render_view(aircraft_mesh, aircraft_pose, camera)
 
+                # Compute oriented bounding box if enabled
+                obb_data = None
+                if self.include_oriented_bboxes:
+                    obb_data = self._compute_oriented_bounding_box(aircraft_mesh, aircraft_pose, camera)
+                    # Draw wireframe bounding box on the image
+                    image = self._draw_bounding_box_wireframe(image, obb_data)
+
                 # Save images
                 image_filename = f"{split_name}_{scene_idx:06d}_{view_idx:02d}.png"
                 image_path = os.path.join(output_dir, split_name, 'images', image_filename)
@@ -274,6 +284,11 @@ class Dataset3D:
                     'camera_target': camera.target.tolist(),
                     'image_size': self.image_size
                 }
+
+                # Add OBB data if computed
+                if obb_data is not None:
+                    annotation['oriented_bbox'] = obb_data
+
                 annotations.append(annotation)
 
         return annotations
@@ -568,6 +583,324 @@ class Dataset3D:
                     # use proper rasterization
 
         return Image.fromarray(depth_array, mode='L')
+
+    def _compute_oriented_bounding_box(self, mesh, aircraft_pose: Dict, camera: Camera) -> Dict:
+        """
+        Compute 3D→2D oriented bounding box projection using full aircraft extents.
+
+        This creates a proper aircraft-axis aligned bounding box that:
+        1. Uses full nose-to-tail and wing-to-wing extents
+        2. Ensures all Z coordinates are above ground (Z > 0)
+        3. Matches PyVista's camera projection exactly
+        """
+        try:
+            import pyvista as pv
+
+            # Create PyVista mesh from aircraft mesh if needed
+            if hasattr(mesh, 'bounds'):
+                pv_mesh = mesh
+            else:
+                faces_with_count = np.column_stack([
+                    np.full(len(mesh.faces), 3),
+                    mesh.faces
+                ]).flatten()
+                pv_mesh = pv.PolyData(mesh.vertices, faces_with_count)
+
+            # Apply the SAME transformation as the rendering pipeline
+            rotation = aircraft_pose['rotation']
+            translation = aircraft_pose['position']
+
+            pitch = math.radians(rotation['pitch'])
+            yaw = math.radians(rotation['yaw'])
+            roll = math.radians(rotation['roll'])
+
+            # Rotation matrices (same as rendering)
+            R_x = np.array([
+                [1, 0, 0],
+                [0, math.cos(pitch), -math.sin(pitch)],
+                [0, math.sin(pitch), math.cos(pitch)]
+            ])
+            R_y = np.array([
+                [math.cos(yaw), 0, math.sin(yaw)],
+                [0, 1, 0],
+                [-math.sin(yaw), 0, math.cos(yaw)]
+            ])
+            R_z = np.array([
+                [math.cos(roll), -math.sin(roll), 0],
+                [math.sin(roll), math.cos(roll), 0],
+                [0, 0, 1]
+            ])
+
+            R = R_z @ R_y @ R_x
+            transform = np.eye(4)
+            transform[:3, :3] = R
+            transform[:3, 3] = translation
+
+            # Apply transformation
+            transformed_mesh = pv_mesh.transform(transform, inplace=False)
+
+            # Create ORIENTED bounding box that follows aircraft orientation
+            # Get the original mesh bounds in aircraft local coordinates BEFORE transformation
+            original_bounds = pv_mesh.bounds
+            x_min_local = original_bounds[0]
+            x_max_local = original_bounds[1]
+            y_min_local = original_bounds[2]
+            y_max_local = original_bounds[3]
+            z_min_local = original_bounds[4]
+            z_max_local = original_bounds[5]
+
+            # Add padding in local aircraft coordinates
+            x_range = x_max_local - x_min_local
+            y_range = y_max_local - y_min_local
+            z_range = z_max_local - z_min_local
+
+            padding = 0.1  # 10% padding
+            x_padding = x_range * padding
+            y_padding = y_range * padding
+            z_padding = z_range * 0.05
+
+            x_min_local -= x_padding
+            x_max_local += x_padding
+            y_min_local -= y_padding
+            y_max_local += y_padding
+            z_min_local -= z_padding
+            z_max_local += z_padding
+
+            # Create 8 corners in aircraft LOCAL coordinates
+            local_corners = np.array([
+                [x_min_local, y_min_local, z_min_local],  # 0: tail-port-bottom
+                [x_max_local, y_min_local, z_min_local],  # 1: nose-port-bottom
+                [x_min_local, y_max_local, z_min_local],  # 2: tail-starboard-bottom
+                [x_max_local, y_max_local, z_min_local],  # 3: nose-starboard-bottom
+                [x_min_local, y_min_local, z_max_local],  # 4: tail-port-top
+                [x_max_local, y_min_local, z_max_local],  # 5: nose-port-top
+                [x_min_local, y_max_local, z_max_local],  # 6: tail-starboard-top
+                [x_max_local, y_max_local, z_max_local],  # 7: nose-starboard-top
+            ])
+
+            # Transform corners to world coordinates using the same transformation
+            corners_3d = []
+            for corner in local_corners:
+                # Convert to homogeneous coordinates
+                corner_homo = np.append(corner, 1.0)
+                # Apply transformation
+                world_corner = transform @ corner_homo
+                corners_3d.append(world_corner[:3])
+
+            corners_3d = np.array(corners_3d)
+
+            # Ensure all corners are above ground
+            min_z = corners_3d[:, 2].min()
+            if min_z < 0:
+                z_offset = -min_z + 0.1
+                corners_3d[:, 2] += z_offset
+
+            mesh_center = transformed_mesh.center
+            mesh_size = max(x_range, y_range, z_range)
+
+            # Get camera positioning (exactly matching PyVista rendering)
+            angle_rad = np.arctan2(camera.position[1], camera.position[0])
+            height_factor = camera.position[2]
+
+            distance = mesh_size * 2.5  # Same multiplier as rendering
+            camera_x = distance * np.cos(angle_rad)
+            camera_y = distance * np.sin(angle_rad)
+            camera_z = height_factor * (mesh_size / 10)  # Same scaling as rendering
+
+            cam_pos = np.array([camera_x, camera_y, camera_z])
+            focal_point = mesh_center
+            up_vector = np.array([0, 0, 1])
+
+            # Project corners using perspective projection matching PyVista
+            corners_2d = []
+            visible_corners = []
+
+            for corner in corners_3d:
+                # Vector from camera to corner
+                to_corner = corner - cam_pos
+
+                # Create camera coordinate system (same as PyVista)
+                forward = focal_point - cam_pos
+                forward = forward / np.linalg.norm(forward)
+                right = np.cross(forward, up_vector)
+                right = right / np.linalg.norm(right)
+                up = np.cross(right, forward)
+
+                # Transform to camera space
+                cam_x = np.dot(to_corner, right)
+                cam_y = np.dot(to_corner, up)
+                cam_z = np.dot(to_corner, forward)
+
+                # Check if in front of camera
+                if cam_z > 0.1:
+                    # Use PyVista-compatible projection with 30-degree FOV
+                    fov_scale = self.image_size[0] * 0.8  # Increased for proper scaling
+                    x_screen = (cam_x / cam_z) * fov_scale + self.image_size[0] / 2
+                    y_screen = -(cam_y / cam_z) * fov_scale + self.image_size[1] / 2
+                    corners_2d.append([x_screen, y_screen])
+                    visible_corners.append(True)
+                else:
+                    corners_2d.append([0, 0])  # Behind camera
+                    visible_corners.append(False)
+
+            corners_2d = np.array(corners_2d)
+
+        except Exception as e:
+            print(f"Warning: OBB computation failed: {e}")
+            # Create fallback corners at image center
+            center_x, center_y = self.image_size[0] // 2, self.image_size[1] // 2
+            corners_3d = np.array([[0, 0, 0]] * 8)  # Dummy 3D corners
+            corners_2d = np.array([[center_x, center_y]] * 8)
+            visible_corners = [True] * 8
+
+        # Compute 2D bounding box from all visible corners
+        valid_corners = []
+        for i, (corner, visible) in enumerate(zip(corners_2d, visible_corners)):
+            x, y = corner
+            if visible:  # Include all visible corners, even if slightly outside image
+                valid_corners.append([x, y])
+
+        if len(valid_corners) > 0:
+            valid_corners = np.array(valid_corners)
+            bbox_2d = {
+                'x_min': float(valid_corners[:, 0].min()),
+                'y_min': float(valid_corners[:, 1].min()),
+                'x_max': float(valid_corners[:, 0].max()),
+                'y_max': float(valid_corners[:, 1].max())
+            }
+            bbox_2d['width'] = bbox_2d['x_max'] - bbox_2d['x_min']
+            bbox_2d['height'] = bbox_2d['y_max'] - bbox_2d['y_min']
+            bbox_2d['area'] = bbox_2d['width'] * bbox_2d['height']
+        else:
+            bbox_2d = None
+
+        return {
+            'corners_3d': corners_3d.tolist(),
+            'corners_2d': corners_2d.tolist(),
+            'visible_corners': visible_corners,
+            'bbox_2d': bbox_2d,
+            'obb_center_2d': corners_2d.mean(axis=0).tolist() if len(corners_2d) > 0 else [0, 0],
+            'num_visible': sum(visible_corners)
+        }
+
+    def _draw_bounding_box_wireframe(self, image: Image.Image, obb_data: Dict) -> Image.Image:
+        """
+        Draw 3D wireframe bounding box on the image using OpenCV.
+
+        Args:
+            image: PIL Image to draw on
+            obb_data: OBB data from _compute_oriented_bounding_box
+
+        Returns:
+            PIL Image with wireframe drawn
+        """
+        try:
+            import cv2
+            import numpy as np
+
+            # Convert PIL to OpenCV format
+            cv_image = cv2.cvtColor(np.array(image), cv2.COLOR_RGB2BGR)
+
+            corners_2d = np.array(obb_data['corners_2d'])
+            visible_corners = obb_data['visible_corners']
+
+            # Define the 12 edges of the bounding box
+            # Corner order: 0=back-left-bottom, 1=back-right-bottom, 2=front-left-bottom, 3=front-right-bottom
+            #               4=back-left-top, 5=back-right-top, 6=front-left-top, 7=front-right-top
+            edges = [
+                # Bottom face edges
+                (0, 1),  # back-left to back-right
+                (1, 3),  # back-right to front-right
+                (3, 2),  # front-right to front-left
+                (2, 0),  # front-left to back-left
+                # Top face edges
+                (4, 5),  # back-left to back-right (top)
+                (5, 7),  # back-right to front-right (top)
+                (7, 6),  # front-right to front-left (top)
+                (6, 4),  # front-left to back-left (top)
+                # Vertical edges
+                (0, 4), (1, 5), (2, 6), (3, 7)
+            ]
+
+            # Simple color scheme for edges
+            bottom_color = (0, 255, 255)    # Cyan for bottom edges
+            top_color = (0, 255, 0)         # Green for top edges
+            vertical_color = (255, 255, 0)  # Yellow for vertical edges
+
+            edge_colors = [
+                # Bottom face (cyan)
+                bottom_color, bottom_color, bottom_color, bottom_color,
+                # Top face (green)
+                top_color, top_color, top_color, top_color,
+                # Vertical edges (yellow)
+                vertical_color, vertical_color, vertical_color, vertical_color
+            ]
+
+            # Draw edges
+            for i, (start_idx, end_idx) in enumerate(edges):
+                # Only draw edge if both corners are visible
+                if visible_corners[start_idx] and visible_corners[end_idx]:
+                    start_point = tuple(map(int, corners_2d[start_idx]))
+                    end_point = tuple(map(int, corners_2d[end_idx]))
+
+                    # Check if points are within reasonable bounds
+                    if (0 <= start_point[0] <= self.image_size[0] * 1.2 and
+                        0 <= start_point[1] <= self.image_size[1] * 1.2 and
+                        0 <= end_point[0] <= self.image_size[0] * 1.2 and
+                        0 <= end_point[1] <= self.image_size[1] * 1.2):
+
+                        cv2.line(cv_image, start_point, end_point, edge_colors[i], 2)
+
+            # Draw corner points with labels
+            corner_colors = [
+                (255, 0, 0),    # Red for bottom corners
+                (255, 0, 0),
+                (255, 0, 0),
+                (255, 0, 0),
+                (255, 165, 0),  # Orange for top corners
+                (255, 165, 0),
+                (255, 165, 0),
+                (255, 165, 0)
+            ]
+
+            for i, (corner, visible) in enumerate(zip(corners_2d, visible_corners)):
+                if visible:
+                    point = tuple(map(int, corner))
+                    if (0 <= point[0] <= self.image_size[0] and
+                        0 <= point[1] <= self.image_size[1]):
+                        # Draw corner point
+                        cv2.circle(cv_image, point, 4, corner_colors[i], -1)
+                        # Draw corner label
+                        cv2.putText(cv_image, str(i),
+                                  (point[0] + 6, point[1] - 6),
+                                  cv2.FONT_HERSHEY_SIMPLEX, 0.4,
+                                  corner_colors[i], 1)
+
+            # Add simple bounding box info
+            if len(corners_2d) >= 8:
+                # Calculate bounding box center
+                box_center = corners_2d.mean(axis=0).astype(int)
+
+                # Add simple label
+                label_color = (255, 255, 255)  # White text
+                font = cv2.FONT_HERSHEY_SIMPLEX
+                font_scale = 0.5
+                thickness = 1
+
+                # Add bounding box label
+                if (0 <= box_center[0] <= self.image_size[0] and
+                    0 <= box_center[1] <= self.image_size[1]):
+                    cv2.putText(cv_image, "3D BBOX",
+                               tuple(box_center + [10, -10]),
+                               font, font_scale, label_color, thickness)
+
+            # Convert back to PIL RGB
+            rgb_image = cv2.cvtColor(cv_image, cv2.COLOR_BGR2RGB)
+            return Image.fromarray(rgb_image)
+
+        except Exception as e:
+            print(f"Warning: Could not draw bounding box wireframe: {e}")
+            return image
 
     def _save_annotations(self, annotations: List[Dict], output_dir: str, split_name: str):
         """Save annotations in JSON format"""

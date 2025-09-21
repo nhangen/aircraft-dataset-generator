@@ -23,7 +23,7 @@ class DatasetGenerator:
     def __init__(self):
         self.aircraft_types = ['F15', 'B52', 'C130']
 
-    def test_dataset(self, output_dir='output/test'):
+    def test_dataset(self, output_dir='output/test', include_obb=False):
         """Generate a small test dataset for validation."""
         print("\n🧪 Generating Test Dataset")
         print("=" * 50)
@@ -32,6 +32,7 @@ class DatasetGenerator:
             aircraft_types=['F15'],
             num_scenes=2,
             views_per_scene=3,
+            include_oriented_bboxes=include_obb,
             image_size=(256, 256)
         )
 
@@ -40,7 +41,7 @@ class DatasetGenerator:
         return results
 
     def production_3d_dataset(self, output_dir='output/production_3d',
-                             num_scenes=50, views_per_scene=8):
+                             num_scenes=50, views_per_scene=8, include_obb=False):
         """Generate production-quality 3D multi-view dataset."""
         print("\n🚀 Generating Production 3D Dataset")
         print("=" * 50)
@@ -50,7 +51,8 @@ class DatasetGenerator:
             num_scenes=num_scenes,
             views_per_scene=views_per_scene,
             image_size=(512, 512),
-            include_depth_maps=True
+            include_depth_maps=True,
+            include_oriented_bboxes=include_obb
         )
 
         results = dataset.generate(output_dir)
@@ -105,9 +107,10 @@ def main():
 Examples:
   python generate_examples.py --mode test         # Quick test dataset
   python generate_examples.py --mode 3d           # Production 3D dataset
+  python generate_examples.py --mode 3d --obb     # 3D dataset with oriented bounding boxes
   python generate_examples.py --mode 2d           # 2D silhouette dataset
   python generate_examples.py --mode comparison   # Both 2D and 3D
-  python generate_examples.py --mode all          # All dataset types
+  python generate_examples.py --mode all --obb    # All dataset types with OBBs
         """
     )
 
@@ -122,6 +125,12 @@ Examples:
         '--output',
         default='output',
         help='Output directory (default: output)'
+    )
+
+    parser.add_argument(
+        '--obb',
+        action='store_true',
+        help='Include oriented bounding box computation (useful for pose estimation)'
     )
 
     parser.add_argument(
@@ -149,12 +158,13 @@ Examples:
 
     try:
         if args.mode == 'test':
-            generator.test_dataset(f'{args.output}/test')
+            generator.test_dataset(f'{args.output}/test', include_obb=args.obb)
 
         elif args.mode == '3d':
             generator.production_3d_dataset(
                 f'{args.output}/3d',
-                num_scenes=args.scenes
+                num_scenes=args.scenes,
+                include_obb=args.obb
             )
 
         elif args.mode == '2d':
@@ -167,9 +177,9 @@ Examples:
             generator.comparison_dataset(f'{args.output}/comparison')
 
         elif args.mode == 'all':
-            generator.test_dataset(f'{args.output}/test')
+            generator.test_dataset(f'{args.output}/test', include_obb=args.obb)
             generator.silhouette_2d_dataset(f'{args.output}/2d', num_samples=args.samples)
-            generator.production_3d_dataset(f'{args.output}/3d', num_scenes=args.scenes)
+            generator.production_3d_dataset(f'{args.output}/3d', num_scenes=args.scenes, include_obb=args.obb)
 
         print("\n🎯 Generation Complete!")
         print(f"Check the output directory: {args.output}")

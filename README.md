@@ -6,8 +6,9 @@ A comprehensive toolkit for generating synthetic aircraft datasets for machine l
 
 - **🛩️ Real Aircraft Models**: F-15 Eagle (50K vertices), B-52 Stratofortress (21K vertices), C-130 Hercules (97K vertices)
 - **📊 Multiple Formats**: 2D silhouettes, 3D multi-view, baseline wireframes
+- **📦 3D Bounding Boxes**: Oriented bounding boxes for pose estimation training
 - **🎯 High Quality**: PyVista rendering with proper lighting, shading, and surfaces
-- **🚀 Ready to Use**: 60 sample images included (10 per aircraft × 6 categories)
+- **🚀 Ready to Use**: 90+ sample images included (10 per aircraft × 9 categories)
 - **📁 Flexible Output**: COCO, YOLO, Pascal VOC annotations
 - **🔧 Extensible**: Add custom STL/OBJ/GLB aircraft models
 
@@ -35,6 +36,7 @@ dataset = Dataset3D(
     aircraft_types=['F15', 'B52', 'C130'],
     num_scenes=100,
     views_per_scene=8,
+    include_oriented_bboxes=True,  # Enable 3D bounding boxes
     image_size=(512, 512)
 )
 results = dataset.generate('output/aircraft_3d')
@@ -57,7 +59,7 @@ Check `sample_images/` for examples of all output types.
 
 ## Sample Images
 
-The repository includes 60 sample images organized by type:
+The repository includes 90+ sample images organized by type:
 
 ```
 sample_images/
@@ -73,7 +75,11 @@ sample_images/
     └── pyvista/          # Real aircraft models
         ├── F15/          # f15_real_01.png → f15_real_10.png
         ├── B52/          # b52_real_01.png → b52_real_10.png
-        └── C130/         # c130_real_01.png → c130_real_10.png
+        ├── C130/         # c130_real_01.png → c130_real_10.png
+        └── bounding_boxes/  # 3D bounding box samples
+            ├── F15/      # f15_3d_bbox_01.png → f15_3d_bbox_10.png
+            ├── B52/      # b52_3d_bbox_01.png → b52_3d_bbox_10.png
+            └── C130/     # c130_3d_bbox_01.png → c130_3d_bbox_10.png
 ```
 
 ## Aircraft Models
@@ -88,6 +94,30 @@ Models are automatically loaded from `models/aircraft/`:
 - `f15.glb` - F-15E Strike Eagle
 - `b52.glb` - B-52 Stratofortress
 - `c130.obj` - C-130 Hercules
+
+## 3D Bounding Boxes for Pose Estimation
+
+Generate oriented 3D bounding boxes that follow aircraft orientation for pose estimation training:
+
+```python
+from aircraft_toolkit import Dataset3D
+
+dataset = Dataset3D(
+    aircraft_types=['F15', 'B52', 'C130'],
+    num_scenes=100,
+    include_oriented_bboxes=True,  # Enable 3D bounding boxes
+    image_size=(512, 512)
+)
+results = dataset.generate('output/pose_estimation_data')
+```
+
+**Features:**
+- ✅ **Oriented Bounding Boxes**: Boxes rotate with aircraft orientation
+- ✅ **Full Coverage**: Encompasses entire aircraft (nose-to-tail, wing-to-wing)
+- ✅ **Color-Coded Visualization**: Cyan bottom, green top, yellow vertical edges
+- ✅ **Corner Labels**: Numbered 0-7 for debugging
+- ✅ **Ground Clearance**: All Z coordinates > 0
+- ✅ **Diverse Poses**: Pitch, yaw, roll variations for robust training
 
 ## Adding Custom Models
 
