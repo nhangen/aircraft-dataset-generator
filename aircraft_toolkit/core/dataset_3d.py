@@ -329,6 +329,17 @@ class Dataset3D:
 
     def _render_view(self, aircraft_mesh, aircraft_pose: Dict, camera: Camera) -> Tuple[Image.Image, Optional[Image.Image]]:
         """Render aircraft from camera viewpoint"""
+        # Check if provider has its own rendering method (e.g., headless provider)
+        if hasattr(self.model_provider, 'render_view'):
+            # Use provider's render method
+            image = self.model_provider.render_view(
+                aircraft_mesh,
+                aircraft_pose=aircraft_pose,
+                camera=camera,
+                image_size=self.image_size
+            )
+            return image, None  # No depth map for provider rendering
+
         # Check if PyVista is available for high-quality rendering
         try:
             import pyvista as pv

@@ -177,25 +177,29 @@ class HeadlessProvider(ModelProvider):
     def render_view(self, mesh: AircraftMesh, **kwargs) -> Image.Image:
         """Render view using pure Python rasterization."""
         image_size = kwargs.get('image_size', (512, 512))
+        aircraft_pose = kwargs.get('aircraft_pose', {})
+        camera = kwargs.get('camera')
 
         # Create blank image
         image = Image.new('RGB', image_size, color=(135, 206, 235))  # Sky blue
         draw = ImageDraw.Draw(image)
 
-        # Simple 3D to 2D projection
-        focal_length = 500
+        # Apply aircraft transformations
+        transformed_vertices = self._apply_transformations(mesh.vertices, aircraft_pose, camera)
 
+        # Project to 2D
         projected_vertices = []
-        for vertex in mesh.vertices:
+        for vertex in transformed_vertices:
             # Simple perspective projection
             if vertex[2] > 0.1:  # Avoid division by zero
+                focal_length = image_size[0] * 0.8  # More appropriate focal length
                 x_2d = int((vertex[0] * focal_length) / vertex[2] + image_size[0] / 2)
                 y_2d = int(-(vertex[1] * focal_length) / vertex[2] + image_size[1] / 2)
                 projected_vertices.append((x_2d, y_2d))
             else:
                 projected_vertices.append((image_size[0]//2, image_size[1]//2))
 
-        # Draw wireframe
+        # Draw filled polygons
         for face in mesh.faces:
             if len(face) >= 3:
                 face_points = [projected_vertices[i] for i in face if i < len(projected_vertices)]
@@ -206,3 +210,52 @@ class HeadlessProvider(ModelProvider):
                         pass  # Skip invalid polygons
 
         return image
+
+    def _apply_transformations(self, vertices, aircraft_pose, camera):
+        """Apply aircraft pose and camera transformations."""
+        import math
+
+        # Apply aircraft pose transformation
+        if aircraft_pose:
+            rotation = aircraft_pose.get('rotation', {'pitch': 0, 'yaw': 0, 'roll': 0})
+            translation = aircraft_pose.get('position', [0, 0, 0])
+
+            # Convert rotations to transformation matrix
+            pitch = math.radians(rotation['pitch'])
+            yaw = math.radians(rotation['yaw'])
+            roll = math.radians(rotation['roll'])
+
+            # Rotation matrices
+            R_x = np.array([
+                [1, 0, 0],
+                [0, math.cos(pitch), -math.sin(pitch)],
+                [0, math.sin(pitch), math.cos(pitch)]
+            ])
+            R_y = np.array([
+                [math.cos(yaw), 0, math.sin(yaw)],
+                [0, 1, 0],
+                [-math.sin(yaw), 0, math.cos(yaw)]
+            ])
+            R_z = np.array([
+                [math.cos(roll), -math.sin(roll), 0],
+                [math.sin(roll), math.cos(roll), 0],
+                [0, 0, 1]
+            ])
+
+            # Combined rotation matrix
+            R = R_z @ R_y @ R_x
+
+            # Transform vertices
+            transformed_vertices = vertices @ R.T
+            transformed_vertices += np.array(translation)
+        else:
+            transformed_vertices = vertices.copy()
+
+        # Apply camera transformation
+        if camera:
+            # Transform to camera space
+            world_vertices = np.column_stack([transformed_vertices, np.ones(len(transformed_vertices))])
+            camera_vertices = world_vertices @ camera.view_matrix.T
+            transformed_vertices = camera_vertices[:, :3]
+
+        return transformed_vertices
