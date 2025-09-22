@@ -349,104 +349,167 @@ class Dataset3D:
             return self._render_view_basic(aircraft_mesh, aircraft_pose, camera)
 
     def _render_view_pyvista(self, aircraft_mesh, aircraft_pose: Dict, camera: Camera) -> Tuple[Image.Image, Optional[Image.Image]]:
-        """Render using PyVista for high-quality output"""
+        """Render using PyVista with aggressive memory management to prevent GPU leaks"""
         import pyvista as pv
         import numpy as np
         from PIL import Image
+        import gc
+        import os
 
-        # Create PyVista mesh from aircraft mesh
-        faces_with_count = np.column_stack([
-            np.full(len(aircraft_mesh.faces), 3),  # Triangle count
-            aircraft_mesh.faces
-        ]).flatten()
+        # Force PyVista to use off-screen rendering mode
+        pv.OFF_SCREEN = True
 
-        pv_mesh = pv.PolyData(aircraft_mesh.vertices, faces_with_count)
+        # Set environment variables to prevent context leaks
+        os.environ['MESA_GL_VERSION_OVERRIDE'] = '3.3'
+        os.environ['PYOPENGL_PLATFORM'] = 'egl'
 
-        # Apply aircraft pose transformation
-        rotation = aircraft_pose['rotation']
-        translation = aircraft_pose['position']
+        # Initialize variables for cleanup
+        pv_mesh = None
+        plotter = None
 
-        # Convert rotations to transformation matrix
-        import math
-        pitch = math.radians(rotation['pitch'])
-        yaw = math.radians(rotation['yaw'])
-        roll = math.radians(rotation['roll'])
+        try:
+            # Clear any existing plotters first
+            try:
+                pv.close_all()
+            except:
+                pass
 
-        # Rotation matrices
-        R_x = np.array([
-            [1, 0, 0],
-            [0, math.cos(pitch), -math.sin(pitch)],
-            [0, math.sin(pitch), math.cos(pitch)]
-        ])
-        R_y = np.array([
-            [math.cos(yaw), 0, math.sin(yaw)],
-            [0, 1, 0],
-            [-math.sin(yaw), 0, math.cos(yaw)]
-        ])
-        R_z = np.array([
-            [math.cos(roll), -math.sin(roll), 0],
-            [math.sin(roll), math.cos(roll), 0],
-            [0, 0, 1]
-        ])
+            # Create PyVista mesh from aircraft mesh
+            faces_with_count = np.column_stack([
+                np.full(len(aircraft_mesh.faces), 3),  # Triangle count
+                aircraft_mesh.faces
+            ]).flatten()
 
-        # Combined rotation
-        R = R_z @ R_y @ R_x
+            pv_mesh = pv.PolyData(aircraft_mesh.vertices, faces_with_count)
 
-        # Create 4x4 transformation matrix
-        transform = np.eye(4)
-        transform[:3, :3] = R
-        transform[:3, 3] = translation
+            # Apply aircraft pose transformation
+            rotation = aircraft_pose['rotation']
+            translation = aircraft_pose['position']
 
-        # Apply transformation
-        pv_mesh = pv_mesh.transform(transform)
+            # Convert rotations to transformation matrix
+            import math
+            pitch = math.radians(rotation['pitch'])
+            yaw = math.radians(rotation['yaw'])
+            roll = math.radians(rotation['roll'])
 
-        # Set up PyVista plotter with off-screen rendering
-        plotter = pv.Plotter(off_screen=True, window_size=self.image_size)
+            # Rotation matrices
+            R_x = np.array([
+                [1, 0, 0],
+                [0, math.cos(pitch), -math.sin(pitch)],
+                [0, math.sin(pitch), math.cos(pitch)]
+            ])
+            R_y = np.array([
+                [math.cos(yaw), 0, math.sin(yaw)],
+                [0, 1, 0],
+                [-math.sin(yaw), 0, math.cos(yaw)]
+            ])
+            R_z = np.array([
+                [math.cos(roll), -math.sin(roll), 0],
+                [math.sin(roll), math.cos(roll), 0],
+                [0, 0, 1]
+            ])
 
-        # Set background color (sky blue)
-        plotter.background_color = (135/255, 206/255, 235/255)
+            # Combined rotation
+            R = R_z @ R_y @ R_x
 
-        # Add the mesh with basic shading
-        plotter.add_mesh(pv_mesh, color='lightgray', show_edges=False, lighting=True)
+            # Create 4x4 transformation matrix
+            transform = np.eye(4)
+            transform[:3, :3] = R
+            transform[:3, 3] = translation
 
-        # Reset camera to properly frame the mesh
-        plotter.reset_camera()
+            # Apply transformation
+            pv_mesh = pv_mesh.transform(transform, inplace=False)
 
-        # Calculate proper camera distance based on mesh size
-        bounds = pv_mesh.bounds
-        mesh_size = max(bounds[1] - bounds[0], bounds[3] - bounds[2], bounds[5] - bounds[4])
+            # Create plotter with specific context management
+            plotter = pv.Plotter(
+                off_screen=True,
+                window_size=self.image_size
+            )
 
-        # Set camera based on the intended viewing angle
-        angle_rad = np.arctan2(camera.position[1], camera.position[0])
-        height = camera.position[2]
+            # Set background color (sky blue)
+            plotter.background_color = (135/255, 206/255, 235/255)
 
-        # Position camera at a distance proportional to mesh size
-        distance = mesh_size * 2.5  # Distance as multiple of mesh size
+            # Add the mesh with basic shading
+            plotter.add_mesh(pv_mesh, color='lightgray', show_edges=False, lighting=True)
 
-        camera_x = distance * np.cos(angle_rad)
-        camera_y = distance * np.sin(angle_rad)
-        camera_z = height * (mesh_size / 10)  # Scale height relative to mesh
+            # Reset camera to properly frame the mesh
+            plotter.reset_camera()
 
-        plotter.camera.position = (camera_x, camera_y, camera_z)
-        plotter.camera.focal_point = pv_mesh.center
-        plotter.camera.up = (0, 0, 1)
-        plotter.camera.view_angle = 30  # degrees
+            # Calculate proper camera distance based on mesh size
+            bounds = pv_mesh.bounds
+            mesh_size = max(bounds[1] - bounds[0], bounds[3] - bounds[2], bounds[5] - bounds[4])
 
-        # Render the scene
-        image_array = plotter.screenshot(return_img=True)
-        plotter.close()
+            # Set camera based on the intended viewing angle
+            angle_rad = np.arctan2(camera.position[1], camera.position[0])
+            height = camera.position[2]
 
-        # Convert to PIL Image
-        image = Image.fromarray(image_array)
+            # Position camera at a distance proportional to mesh size
+            distance = mesh_size * 2.5  # Distance as multiple of mesh size
 
-        # Generate depth map (simplified for now)
-        depth_map = None
-        if self.include_depth_maps:
-            # Use z-buffer approach for depth
-            depth_array = np.full(self.image_size[::-1], 255, dtype=np.uint8)  # White = far
-            depth_map = Image.fromarray(depth_array, mode='L')
+            camera_x = distance * np.cos(angle_rad)
+            camera_y = distance * np.sin(angle_rad)
+            camera_z = height * (mesh_size / 10)  # Scale height relative to mesh
 
-        return image, depth_map
+            plotter.camera.position = (camera_x, camera_y, camera_z)
+            plotter.camera.focal_point = pv_mesh.center
+            plotter.camera.up = (0, 0, 1)
+            plotter.camera.view_angle = 30  # degrees
+
+            # Render the scene with explicit cleanup
+            image_array = plotter.screenshot(return_img=True, transparent_background=False)
+
+            # Convert to PIL Image
+            image = Image.fromarray(image_array)
+
+            # Generate depth map (simplified for now)
+            depth_map = None
+            if self.include_depth_maps:
+                # Use z-buffer approach for depth
+                depth_array = np.full(self.image_size[::-1], 255, dtype=np.uint8)  # White = far
+                depth_map = Image.fromarray(depth_array, mode='L')
+
+            return image, depth_map
+
+        finally:
+            # CRITICAL: Aggressive cleanup to prevent GPU memory leak
+            if plotter is not None:
+                try:
+                    # Remove all actors first
+                    for actor in plotter.actors.values():
+                        plotter.remove_actor(actor)
+                    plotter.clear()
+                    plotter.close()
+                    # Force delete
+                    del plotter
+                except:
+                    pass
+
+            # Clear mesh data immediately
+            if pv_mesh is not None:
+                try:
+                    del pv_mesh
+                except:
+                    pass
+
+            # Clear all PyVista objects and force context cleanup
+            try:
+                pv.close_all()
+                # Force garbage collection multiple times to ensure cleanup
+                gc.collect()
+                gc.collect()
+                gc.collect()
+            except:
+                pass
+
+            # Try to reset PyVista global state
+            try:
+                # Reset global settings
+                pv.rcParams.reset_to_defaults()
+                # Clear any cached textures or buffers if available
+                if hasattr(pv, '_clear_cache'):
+                    pv._clear_cache()
+            except:
+                pass
 
     def _render_view_basic(self, aircraft_mesh, aircraft_pose: Dict, camera: Camera) -> Tuple[Image.Image, Optional[Image.Image]]:
         """Basic wireframe rendering fallback"""
