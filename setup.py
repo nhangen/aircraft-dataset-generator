@@ -8,7 +8,7 @@ with open("README.md", "r", encoding="utf-8") as fh:
 
 setup(
     name="aircraft-dataset-generator",
-    version="0.1.0",
+    version="2.1.0",
     author="Contributors",
     description="Comprehensive toolkit for generating synthetic aircraft datasets",
     long_description=long_description,
@@ -38,6 +38,8 @@ setup(
         "scikit-image>=0.18.0",
         "tqdm>=4.62.0",
         "trimesh>=3.20.0",
+        "scipy>=1.7.0",
+        "pyvista>=0.40.0",
     ],
     extras_require={
         "dev": [

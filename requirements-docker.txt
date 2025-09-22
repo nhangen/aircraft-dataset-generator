@@ -1,0 +1,21 @@
+# Docker/headless environment requirements for Aircraft Dataset Generator
+# Use this for installation in existing Docker containers
+
+# Core dependencies (same as requirements.txt)
+numpy>=1.21.0
+Pillow>=8.3.0
+matplotlib>=3.5.0
+opencv-python-headless>=4.5.0  # Headless version (no GUI dependencies)
+scikit-image>=0.18.0
+tqdm>=4.62.0
+trimesh>=3.20.0
+scipy>=1.7.0
+
+# 3D rendering (may require system OpenGL libraries)
+pyvista>=0.40.0
+
+# Installation in Docker:
+# 1. Install system packages: apt-get install libosmesa6-dev libgl1-mesa-dev xvfb
+# 2. Install this: pip install -r requirements-docker.txt
+# 3. Install toolkit: pip install -e .
+# 4. Use headless provider if PyVista fails: --provider headless

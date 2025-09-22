@@ -15,15 +15,32 @@ A comprehensive toolkit for generating synthetic aircraft datasets for machine l
 ## Quick Start
 
 ### Installation
-```bash
-# Install dependencies
-pip install pyvista
-pip install -e .
 
-# Or use conda environment
+**Standard Installation:**
+```bash
+pip install -r requirements.txt
+pip install -e .
+```
+
+**Conda Environment:**
+```bash
 conda env create -f environment.yml
 conda activate aircraft-toolkit
 pip install -e .
+```
+
+**Docker/Headless Environment:**
+```bash
+# Install system OpenGL libraries first
+apt-get install libosmesa6-dev libgl1-mesa-dev xvfb
+
+# Install Python dependencies
+pip install -r requirements-docker.txt
+pip install -e .
+
+# Set environment variables
+export PYVISTA_OFF_SCREEN=true
+export MESA_GL_VERSION_OVERRIDE=3.3
 ```
 
 ### Generate Datasets
@@ -106,6 +123,23 @@ dataset = Dataset3D(
     aircraft_types=['F15', 'B52', 'C130'],
     num_scenes=100,
     include_oriented_bboxes=True,  # Enable 3D bounding boxes
+    image_size=(512, 512)
+)
+results = dataset.generate('output/pose_estimation_data')
+```
+
+**Docker/Headless Fallback:**
+```python
+from aircraft_toolkit import Dataset3D
+from aircraft_toolkit.config import Config
+
+# If PyVista fails in Docker, use headless provider
+config = Config()
+config.set_preferred_provider('headless')
+
+dataset = Dataset3D(
+    aircraft_types=['F15', 'B52', 'C130'],
+    num_scenes=100,
     image_size=(512, 512)
 )
 results = dataset.generate('output/pose_estimation_data')

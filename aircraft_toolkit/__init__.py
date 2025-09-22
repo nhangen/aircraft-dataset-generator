@@ -1,6 +1,6 @@
 """Aircraft Dataset Generator - Synthetic aircraft dataset generation toolkit"""
 
-__version__ = "0.1.0"
+__version__ = "2.1.0"
 __author__ = "Contributors"
 
 from .core.dataset_2d import Dataset2D
