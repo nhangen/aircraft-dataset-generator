@@ -26,7 +26,7 @@ Usage:
 
 from .base import ModelProvider, AircraftMesh
 from .basic import BasicProvider
-from .registry import ProviderRegistry, get_provider, register_provider, list_providers
+from .registry import get_provider, register_provider, list_providers
 
 # Try to register PyVista provider
 try:
@@ -37,6 +37,13 @@ except ImportError:
 
 # Register default providers
 register_provider('basic', BasicProvider)
+
+# Register headless provider for Docker environments
+try:
+    from .headless_provider import HeadlessProvider
+    register_provider('headless', HeadlessProvider)
+except ImportError:
+    pass
 
 __all__ = [
     'ModelProvider',
