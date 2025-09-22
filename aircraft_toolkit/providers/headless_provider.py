@@ -17,11 +17,15 @@ class HeadlessProvider(ModelProvider):
         super().__init__(config)
         self.name = "headless"
 
+    def _initialize(self):
+        """Initialize provider-specific resources."""
+        pass
+
     def get_supported_aircraft(self) -> List[str]:
         """Return list of supported aircraft types."""
         return ['F15', 'B52', 'C130']
 
-    def create_aircraft(self, aircraft_type: str, **kwargs) -> AircraftMesh:
+    def create_aircraft(self, aircraft_type: str, detail_level: str = 'medium', **kwargs) -> AircraftMesh:
         """Create aircraft mesh for headless rendering."""
         aircraft_type = aircraft_type.upper()
 
@@ -58,7 +62,7 @@ class HeadlessProvider(ModelProvider):
             [5.0, 2.0, -1.0],   # Right intake
         ])
 
-        faces = [
+        faces = np.array([
             # Fuselage triangles
             [0, 1, 4], [0, 1, 3], [1, 2, 7], [1, 2, 8],
             # Wing triangles
@@ -67,7 +71,7 @@ class HeadlessProvider(ModelProvider):
             [7, 8, 9], [2, 7, 9], [2, 8, 9],
             # Engine triangles
             [10, 11, 1], [0, 10, 1], [0, 11, 1],
-        ]
+        ])
 
         return AircraftMesh(
             vertices=vertices,
@@ -102,7 +106,7 @@ class HeadlessProvider(ModelProvider):
             [6.0, 15.0, -2.0],  # Right outboard engine
         ])
 
-        faces = [
+        faces = np.array([
             # Fuselage
             [0, 1, 5], [0, 1, 6], [1, 2, 8], [1, 2, 9],
             # Wings
@@ -111,7 +115,7 @@ class HeadlessProvider(ModelProvider):
             [2, 7, 8], [2, 7, 9], [8, 9, 7],
             # Engines
             [10, 11, 3], [12, 13, 4], [5, 11, 1], [6, 12, 1],
-        ]
+        ])
 
         return AircraftMesh(
             vertices=vertices,
@@ -151,7 +155,7 @@ class HeadlessProvider(ModelProvider):
             [10.0, 2.0, -1.0],  # Right main gear
         ])
 
-        faces = [
+        faces = np.array([
             # Fuselage
             [0, 1, 5], [0, 1, 6], [1, 2, 5], [1, 2, 6],
             # Wings
@@ -162,7 +166,7 @@ class HeadlessProvider(ModelProvider):
             [10, 11, 5], [12, 13, 6], [1, 11, 5], [1, 12, 6],
             # Landing gear
             [0, 14, 1], [15, 16, 1],
-        ]
+        ])
 
         return AircraftMesh(
             vertices=vertices,
