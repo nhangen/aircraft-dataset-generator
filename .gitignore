@@ -91,6 +91,8 @@ models/aircraft/*.ply
 *.jpeg
 !sample_images/**/*.png
 !sample_images/**/*.jpg
+!demos/*.png
+!demos/*.jpg
 
 # Generated output directories
 aircraft_2d_basic/

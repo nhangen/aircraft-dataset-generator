@@ -72,7 +72,35 @@ results = dataset.generate('output/aircraft_2d')
 ```
 
 ### View Sample Images
-Check `sample_images/` for examples of all output types.
+Check `sample_images/` for examples of all output types, or see the demo images below from our 40K dataset.
+
+## Platform Capabilities Demo
+
+Our toolkit supports **multiple rendering modes** and **output formats**. Here's what each aircraft type looks like across all supported formats:
+
+### 🎯 **C-130 Hercules Transport Aircraft**
+| **2D Silhouettes** | **3D Realistic** | **3D with Bounding Boxes** | **Wireframe Baseline** |
+|:------------------:|:----------------:|:--------------------------:|:----------------------:|
+| ![C-130 2D](demos/c130_2d_silhouette.png) | ![C-130 3D](demos/c130_3d_pyvista.png) | ![C-130 OBB](demos/c130_sample.png) | ![C-130 Wire](demos/c130_wireframe.png) |
+| *Binary silhouettes<br/>for shape classification* | *PyVista photorealistic<br/>rendering (96K vertices)* | *With oriented bounding<br/>boxes for pose estimation* | *Basic wireframe<br/>fallback (14 vertices)* |
+
+### ✈️ **B-52 Stratofortress Strategic Bomber**
+| **2D Silhouettes** | **3D Realistic** | **3D with Bounding Boxes** | **Wireframe Baseline** |
+|:------------------:|:----------------:|:--------------------------:|:----------------------:|
+| ![B-52 2D](demos/b52_2d_silhouette.png) | ![B-52 3D](demos/b52_3d_pyvista.png) | ![B-52 OBB](demos/b52_sample.png) | ![B-52 Wire](demos/b52_wireframe.png) |
+| *Binary silhouettes<br/>for shape classification* | *PyVista photorealistic<br/>rendering (21K vertices)* | *With oriented bounding<br/>boxes for pose estimation* | *Basic wireframe<br/>fallback (14 vertices)* |
+
+### 🚁 **F-15 Eagle Fighter Aircraft**
+| **2D Silhouettes** | **3D Realistic** | **3D with Bounding Boxes** | **Wireframe Baseline** |
+|:------------------:|:----------------:|:--------------------------:|:----------------------:|
+| ![F-15 2D](demos/f15_2d_silhouette.png) | ![F-15 3D](demos/f15_3d_pyvista.png) | ![F-15 OBB](demos/f15_sample.png) | ![F-15 Wire](demos/f15_wireframe.png) |
+| *Binary silhouettes<br/>for shape classification* | *PyVista photorealistic<br/>rendering (50K vertices)* | *With oriented bounding<br/>boxes for pose estimation* | *Basic wireframe<br/>fallback (14 vertices)* |
+
+### **Use Cases by Format:**
+- **2D Silhouettes**: Shape classification, binary detection, lightweight mobile models
+- **3D Realistic**: Object detection, visual recognition, high-fidelity training
+- **3D with Bounding Boxes**: Pose estimation, 6DOF tracking, robotics applications
+- **Wireframe Baseline**: Fallback for resource-constrained environments, geometric analysis
 
 ## Sample Images
 
