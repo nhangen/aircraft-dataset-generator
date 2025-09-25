@@ -64,7 +64,10 @@ class Dataset3D:
                  include_depth_maps: bool = True,
                  include_surface_normals: bool = False,
                  include_oriented_bboxes: bool = False,
-                 image_size: Tuple[int, int] = (512, 512)):
+                 image_size: Tuple[int, int] = (512, 512),
+                 pitch_range: Tuple[float, float] = (-30, 30),
+                 roll_range: Tuple[float, float] = (-15, 15),
+                 yaw_range: Tuple[float, float] = (-180, 180)):
         """
         Initialize 3D dataset generator
 
@@ -78,6 +81,9 @@ class Dataset3D:
             include_surface_normals: Whether to generate surface normals
             include_oriented_bboxes: Whether to compute 3D→2D oriented bounding boxes
             image_size: Output image size (width, height)
+            pitch_range: Aircraft pitch rotation range in degrees
+            roll_range: Aircraft roll rotation range in degrees
+            yaw_range: Aircraft yaw rotation range in degrees
         """
         self.aircraft_types = aircraft_types
         self.num_scenes = num_scenes
@@ -88,6 +94,9 @@ class Dataset3D:
         self.include_surface_normals = include_surface_normals
         self.include_oriented_bboxes = include_oriented_bboxes
         self.image_size = image_size
+        self.pitch_range = pitch_range
+        self.roll_range = roll_range
+        self.yaw_range = yaw_range
 
         # Initialize configuration and providers with fallback
         self.config = get_config()
@@ -298,9 +307,9 @@ class Dataset3D:
         return {
             'position': [0.0, 0.0, 0.0],  # Aircraft at origin
             'rotation': {
-                'pitch': np.random.uniform(-30, 30),
-                'yaw': np.random.uniform(-180, 180),
-                'roll': np.random.uniform(-15, 15)
+                'pitch': np.random.uniform(*self.pitch_range),
+                'yaw': np.random.uniform(*self.yaw_range),
+                'roll': np.random.uniform(*self.roll_range)
             }
         }
 

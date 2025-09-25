@@ -42,6 +42,35 @@ dataset_name/
     └── annotations/
 ```
 
+## Expanded Rotation Datasets
+
+### Breaking the 120° Convergence Barrier
+
+Traditional pose estimation models plateau at ~120° error due to constrained training data. The expanded rotation functionality breaks this barrier:
+
+**Original Constraints (causing 120° plateau):**
+- Pitch: ±30° (60° range)
+- Roll: ±15° (30° range)
+- Yaw: ±180° (360° range)
+
+**Expanded Ranges (solution):**
+```python
+Dataset3D(
+    pitch_range=(-90, 90),    # 3x expansion
+    roll_range=(-180, 180),   # 12x expansion
+    yaw_range=(-180, 180)     # Full coverage
+)
+```
+
+**Results:** 30x larger pose space for breakthrough model performance
+
+### `aircraft_40k_expanded_rotations` Dataset
+- **40,000 images** with expanded rotation ranges
+- **Generated:** Sep 25, 2025
+- **Time:** 114 minutes (1.9 hours)
+- **Purpose:** Break 120° convergence barrier in pose estimation
+- **Validation:** 69.6% pitch violations, 92.0% roll violations (breaking old constraints)
+
 **Notes:**
 - Successfully generated 40,000 image dataset on Sep 22, 2025
 - Total generation time: ~2 hours

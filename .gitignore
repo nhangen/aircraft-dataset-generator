@@ -98,6 +98,19 @@ models/aircraft/*.ply
 aircraft_2d_basic/
 aircraft_3d_basic/
 
+# Large generated datasets (multi-GB)
+aircraft_3d_pyvista_obb_40k/
+aircraft_40k_expanded_rotations/
+aircraft_3d_full_rotation_5k/
+
+# Dataset generation state files
+*_generation_state.json
+
+# Temporary generation scripts (auto-created/deleted)
+generate_single_batch*.py
+generate_*_40k.py
+generate_*_dataset.py
+
 # Documentation files (internal/handoff)
 HANDOFF.md
 INTEGRATION_PLAN.md
