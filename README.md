@@ -238,11 +238,35 @@ output/
 └── test/
 ```
 
-**Annotations include:**
-- Aircraft pose (rotation, translation)
-- Camera parameters
-- Bounding boxes
-- Aircraft type labels
+**Unified Annotation Format:**
+- **Consistent structure** across 2D and 3D datasets
+- **Aircraft pose** with nested position/rotation structure
+- **Camera parameters** (position, target)
+- **3D bounding boxes** (3D datasets only)
+- **Depth maps** (3D datasets only)
+- **Aircraft type labels**
+
+**Annotation Structure:**
+```json
+{
+  "scene_id": 0,
+  "view_id": 0,
+  "image_path": "path/to/image.png",
+  "aircraft_type": "F15",
+  "aircraft_pose": {
+    "position": [0.0, 0.0, 0.0],
+    "rotation": {
+      "pitch": -30.0,
+      "yaw": 45.0,
+      "roll": 15.0
+    }
+  },
+  "camera_position": [8.9, 0.0, 5.3],
+  "camera_target": [0.0, 0.0, 0.0],
+  "image_size": [512, 512],
+  "oriented_bbox": {...}  // 3D only
+}
+```
 
 ## Requirements
 

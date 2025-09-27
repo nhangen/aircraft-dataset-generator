@@ -129,18 +129,29 @@ class TestDataset2D(unittest.TestCase):
         self.assertEqual(len(annotations), 2)
         
         for ann in annotations:
-            # Check required fields
-            self.assertIn('image_id', ann)
+            # Check required fields (unified format)
+            self.assertIn('scene_id', ann)
+            self.assertIn('view_id', ann)
             self.assertIn('image_path', ann)
             self.assertIn('aircraft_type', ann)
-            self.assertIn('pose', ann)
+            self.assertIn('aircraft_pose', ann)
+            self.assertIn('camera_position', ann)
+            self.assertIn('camera_target', ann)
             self.assertIn('image_size', ann)
-            
-            # Check pose structure
-            pose = ann['pose']
-            required_pose_keys = ['pitch', 'yaw', 'roll', 'x', 'y', 'z']
-            for key in required_pose_keys:
-                self.assertIn(key, pose)
+
+            # Check unified pose structure
+            aircraft_pose = ann['aircraft_pose']
+            self.assertIn('position', aircraft_pose)
+            self.assertIn('rotation', aircraft_pose)
+
+            # Check rotation components
+            rotation = aircraft_pose['rotation']
+            required_rotation_keys = ['pitch', 'yaw', 'roll']
+            for key in required_rotation_keys:
+                self.assertIn(key, rotation)
+
+            # Check position is list of 3 coordinates
+            self.assertEqual(len(aircraft_pose['position']), 3)
     
     def test_annotation_format_coco(self):
         """Test COCO annotation format generation"""

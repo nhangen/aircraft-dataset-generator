@@ -83,27 +83,41 @@ Created unit tests in `tests/test_rotation_ranges.py`:
 - **Batch processing** (50 scenes per batch) maintains stability
 - **100 successful batches** with zero memory-related failures
 
-### Annotation Structure
-Each image includes:
+### Unified Annotation Structure
+
+**Breaking Change:** All datasets (2D and 3D) now use a unified annotation format for consistency:
+
 ```json
 {
   "scene_id": 0,
   "view_id": 0,
+  "image_path": "path/to/image.png",
   "aircraft_type": "F15",
   "aircraft_pose": {
+    "position": [0.0, 0.0, 0.0],
     "rotation": {
       "pitch": -87.8,  // Now ±90° range
       "yaw": 142.3,    // Full ±180° range
       "roll": 173.9    // Now ±180° range
     }
   },
+  "camera_position": [8.9, 0.0, 5.3],
+  "camera_target": [0.0, 0.0, 0.0],
+  "image_size": [512, 512],
+  "depth_path": "path/to/depth.png",  // 3D only
   "oriented_bbox": {
-    "corners_3d": [...],  // 8-point 3D bounding box
-    "corners_2d": [...],  // 2D projections
-    "bbox_2d": [...],     // Standard 2D bbox
+    "corners_3d": [...],  // 8-point 3D bounding box (3D only)
+    "corners_2d": [...],  // 2D projections (3D only)
+    "bbox_2d": [...]      // Standard 2D bbox (3D only)
   }
 }
 ```
+
+**Format Benefits:**
+- **Consistent structure** across 2D and 3D datasets
+- **Easier model training** with unified data loading
+- **Future-proof** annotation schema
+- **Backward compatible** pose data (nested in `aircraft_pose.rotation`)
 
 ### File Locations
 - **Dataset:** `aircraft_40k_expanded_rotations/`

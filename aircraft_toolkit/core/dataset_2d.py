@@ -137,13 +137,23 @@ class Dataset2D:
             image_path = os.path.join(output_dir, split_name, 'images', image_filename)
             image.save(image_path)
             
-            # Create annotation
+            # Create annotation - use 3D format for consistency
             annotation = {
-                'image_id': i,
+                'scene_id': i,
+                'view_id': 0,  # 2D images only have one view
                 'image_path': image_path,
                 'aircraft_type': aircraft_type,
-                'pose': pose,
-                'image_size': self.image_size
+                'aircraft_pose': {
+                    'position': [pose['x'], pose['y'], pose['z']],
+                    'rotation': {
+                        'pitch': pose['pitch'],
+                        'yaw': pose['yaw'],
+                        'roll': pose['roll']
+                    }
+                },
+                'camera_position': [0.0, 0.0, 5.0],  # Default 2D camera position
+                'camera_target': [0.0, 0.0, 0.0],
+                'image_size': list(self.image_size)
             }
             annotations.append(annotation)
         
@@ -202,7 +212,7 @@ class Dataset2D:
             raise ValueError(f"Unsupported annotation format: {format_type}")
     
     def _save_custom_format(self, annotations: List[Dict], output_dir: str, split_name: str):
-        """Save in custom JSON format"""
+        """Save in custom JSON format (now matches 3D format)"""
         output_file = os.path.join(output_dir, f"{split_name}_annotations.json")
         with open(output_file, 'w') as f:
             json.dump(annotations, f, indent=2)
@@ -223,7 +233,7 @@ class Dataset2D:
         
         for ann in annotations:
             coco_data["images"].append({
-                "id": ann["image_id"],
+                "id": ann["scene_id"],  # Use scene_id instead of image_id
                 "file_name": os.path.basename(ann["image_path"]),
                 "width": ann["image_size"][0],
                 "height": ann["image_size"][1]
