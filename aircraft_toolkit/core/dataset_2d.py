@@ -253,27 +253,60 @@ class Dataset2D:
             json.dump(annotations, f, indent=2)
     
     def _save_coco_format(self, annotations: List[Dict], output_dir: str, split_name: str):
-        """Save in COCO format"""
-        # Simplified COCO format implementation
+        """Save in COCO format with task mode support"""
         coco_data = {
-            "info": {"description": "Aircraft Pose Dataset"},
+            "info": {"description": f"Aircraft Dataset - {self.task_mode} mode"},
             "categories": [
-                {"id": 1, "name": "F15"}, 
-                {"id": 2, "name": "B52"}, 
+                {"id": 1, "name": "F15"},
+                {"id": 2, "name": "B52"},
                 {"id": 3, "name": "C130"}
             ],
             "images": [],
             "annotations": []
         }
-        
+
+        annotation_id = 1
         for ann in annotations:
+            # Add image info
             coco_data["images"].append({
-                "id": ann["scene_id"],  # Use scene_id instead of image_id
+                "id": ann["scene_id"],
                 "file_name": os.path.basename(ann["image_path"]),
                 "width": ann["image_size"][0],
                 "height": ann["image_size"][1]
             })
-        
+
+            # Add annotation based on task mode
+            coco_annotation = {
+                "id": annotation_id,
+                "image_id": ann["scene_id"],
+                "iscrowd": 0
+            }
+
+            # Add classification data if in classification or both mode
+            if self.task_mode in ['classification', 'both'] and 'aircraft_type' in ann:
+                category_map = {"F15": 1, "B52": 2, "C130": 3}
+                coco_annotation["category_id"] = category_map.get(ann["aircraft_type"], 1)
+
+            # Add bounding box and pose data if in pose or both mode
+            if self.task_mode in ['pose', 'both']:
+                if 'bbox_2d' in ann:
+                    # COCO bbox format: [x, y, width, height]
+                    bbox = ann['bbox_2d']  # [x_min, y_min, x_max, y_max]
+                    coco_bbox = [bbox[0], bbox[1], bbox[2] - bbox[0], bbox[3] - bbox[1]]
+                    coco_annotation["bbox"] = coco_bbox
+                    coco_annotation["area"] = (bbox[2] - bbox[0]) * (bbox[3] - bbox[1])
+
+                # Add pose data as custom fields
+                if 'aircraft_pose' in ann:
+                    coco_annotation["pose"] = ann["aircraft_pose"]
+                if 'camera_position' in ann:
+                    coco_annotation["camera_position"] = ann["camera_position"]
+                if 'camera_target' in ann:
+                    coco_annotation["camera_target"] = ann["camera_target"]
+
+            coco_data["annotations"].append(coco_annotation)
+            annotation_id += 1
+
         output_file = os.path.join(output_dir, f"{split_name}_coco.json")
         with open(output_file, 'w') as f:
             json.dump(coco_data, f, indent=2)
