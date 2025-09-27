@@ -18,21 +18,30 @@ class Dataset2D:
                  num_samples: int,
                  image_size: Tuple[int, int] = (224, 224),
                  pose_range: Optional[Dict] = None,
-                 background_type: str = 'gradient'):
+                 background_type: str = 'gradient',
+                 task_mode: str = 'both'):
         """
         Initialize 2D dataset generator
-        
+
         Args:
             aircraft_types: List of aircraft type names ['F15', 'B52', 'C130']
             num_samples: Total number of images to generate
             image_size: Output image dimensions (width, height)
             pose_range: Dict with pose ranges, e.g. {'pitch': (-45, 45)}
             background_type: Background style ('gradient', 'solid', 'sky')
+            task_mode: Generation mode ('classification', 'pose', 'both')
+                - classification: Only aircraft type labels
+                - pose: Only pose estimation annotations
+                - both: Both classification and pose annotations
         """
         self.aircraft_types = aircraft_types
         self.num_samples = num_samples
         self.image_size = image_size
         self.background_type = background_type
+        self.task_mode = task_mode
+
+        if task_mode not in ['classification', 'pose', 'both']:
+            raise ValueError(f"Invalid task_mode: {task_mode}. Must be 'classification', 'pose', or 'both'")
         
         # Default pose ranges
         default_ranges = {
@@ -129,32 +138,45 @@ class Dataset2D:
             # Random pose
             pose = self._generate_random_pose()
             
-            # Generate image
-            image = self._render_aircraft(aircraft_model, pose)
-            
+            # Generate image with bounding box
+            image, bbox_data = self._render_aircraft(aircraft_model, pose)
+
             # Save image
             image_filename = f"{split_name}_{i:06d}.png"
             image_path = os.path.join(output_dir, split_name, 'images', image_filename)
             image.save(image_path)
-            
-            # Create annotation - use 3D format for consistency
+
+            # Create annotation based on task mode
             annotation = {
                 'scene_id': i,
                 'view_id': 0,  # 2D images only have one view
                 'image_path': image_path,
-                'aircraft_type': aircraft_type,
-                'aircraft_pose': {
+                'image_size': list(self.image_size)
+            }
+
+            # Add classification data if needed
+            if self.task_mode in ['classification', 'both']:
+                annotation['aircraft_type'] = aircraft_type
+
+            # Add pose data if needed
+            if self.task_mode in ['pose', 'both']:
+                annotation['aircraft_pose'] = {
                     'position': [pose['x'], pose['y'], pose['z']],
                     'rotation': {
                         'pitch': pose['pitch'],
                         'yaw': pose['yaw'],
                         'roll': pose['roll']
                     }
-                },
-                'camera_position': [0.0, 0.0, 5.0],  # Default 2D camera position
-                'camera_target': [0.0, 0.0, 0.0],
-                'image_size': list(self.image_size)
-            }
+                }
+                annotation['camera_position'] = [0.0, 0.0, 5.0]  # Default 2D camera position
+                annotation['camera_target'] = [0.0, 0.0, 0.0]
+
+                # Add bounding box data for pose estimation
+                if bbox_data:
+                    annotation['bbox_2d'] = bbox_data['bbox_2d']
+                    annotation['bbox_center'] = bbox_data['center']
+                    annotation['bbox_size'] = [bbox_data['width'], bbox_data['height']]
+
             annotations.append(annotation)
         
         return annotations
@@ -170,23 +192,36 @@ class Dataset2D:
             'z': np.random.uniform(*self.pose_range['z'])
         }
     
-    def _render_aircraft(self, aircraft_model, pose: Dict) -> Image.Image:
-        """Render aircraft silhouette with given pose"""
+    def _render_aircraft(self, aircraft_model, pose: Dict) -> Tuple[Image.Image, Dict]:
+        """Render aircraft silhouette with given pose and compute bounding box"""
         # Create image with gradient background
         image = Image.new('RGB', self.image_size, color=(135, 206, 235))  # Sky blue
         draw = ImageDraw.Draw(image)
-        
+
         # Get aircraft silhouette points
         silhouette_points = aircraft_model.get_silhouette_for_pose(pose)
-        
+
         # Scale and center points
         scaled_points = self._scale_points_to_image(silhouette_points)
-        
-        # Draw aircraft silhouette
+
+        # Compute bounding box from silhouette points
+        bbox_data = {}
         if len(scaled_points) > 2:
+            # Draw aircraft silhouette
             draw.polygon(scaled_points, fill=(64, 64, 64), outline=(32, 32, 32))
-        
-        return image
+
+            # Compute 2D bounding box
+            xs = [p[0] for p in scaled_points]
+            ys = [p[1] for p in scaled_points]
+            bbox_data = {
+                'bbox_2d': [min(xs), min(ys), max(xs), max(ys)],  # [x_min, y_min, x_max, y_max]
+                'center': [(min(xs) + max(xs)) / 2, (min(ys) + max(ys)) / 2],
+                'width': max(xs) - min(xs),
+                'height': max(ys) - min(ys),
+                'silhouette_points': scaled_points  # Keep the actual silhouette for advanced pose estimation
+            }
+
+        return image, bbox_data
     
     def _scale_points_to_image(self, points: List[Tuple[float, float]]) -> List[Tuple[int, int]]:
         """Scale normalized aircraft points to image coordinates"""

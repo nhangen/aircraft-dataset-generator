@@ -119,6 +119,49 @@ Created unit tests in `tests/test_rotation_ranges.py`:
 - **Future-proof** annotation schema
 - **Backward compatible** pose data (nested in `aircraft_pose.rotation`)
 
+## Task-Specific Generation Modes
+
+Both 2D and 3D datasets now support flexible task modes:
+
+### Classification Mode (`task_mode='classification'`)
+```python
+dataset = Dataset3D(
+    aircraft_types=['F15', 'B52', 'C130'],
+    num_scenes=100,
+    task_mode='classification'  # Only aircraft type labels
+)
+```
+- **Use case**: Aircraft type detection/classification
+- **Annotations**: Only `aircraft_type` field
+- **Training**: Classification models, object detection
+
+### Pose Estimation Mode (`task_mode='pose'`)
+```python
+dataset = Dataset3D(
+    aircraft_types=['F15', 'B52', 'C130'],
+    num_scenes=100,
+    task_mode='pose',  # Pose data only
+    include_oriented_bboxes=True,
+    pitch_range=(-90, 90),    # Expanded ranges
+    roll_range=(-180, 180)
+)
+```
+- **Use case**: 6DOF pose estimation training
+- **Annotations**: `aircraft_pose`, `camera_position`, `oriented_bbox`, `depth_path`
+- **Training**: Pose regression models, 3D reconstruction
+
+### Multi-Task Mode (`task_mode='both'`)
+```python
+dataset = Dataset3D(
+    aircraft_types=['F15', 'B52', 'C130'],
+    num_scenes=100,
+    task_mode='both'  # Complete annotations
+)
+```
+- **Use case**: Multi-task learning (classification + pose)
+- **Annotations**: All fields included
+- **Training**: Joint classification and pose estimation models
+
 ### File Locations
 - **Dataset:** `aircraft_40k_expanded_rotations/`
 - **Annotations:** `train_annotations.json`, `val_annotations.json`, `test_annotations.json`

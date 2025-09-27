@@ -67,7 +67,8 @@ class Dataset3D:
                  image_size: Tuple[int, int] = (512, 512),
                  pitch_range: Tuple[float, float] = (-30, 30),
                  roll_range: Tuple[float, float] = (-15, 15),
-                 yaw_range: Tuple[float, float] = (-180, 180)):
+                 yaw_range: Tuple[float, float] = (-180, 180),
+                 task_mode: str = 'both'):
         """
         Initialize 3D dataset generator
 
@@ -84,6 +85,10 @@ class Dataset3D:
             pitch_range: Aircraft pitch rotation range in degrees
             roll_range: Aircraft roll rotation range in degrees
             yaw_range: Aircraft yaw rotation range in degrees
+            task_mode: Generation mode ('classification', 'pose', 'both')
+                - classification: Only aircraft type labels
+                - pose: Only pose estimation annotations
+                - both: Both classification and pose annotations
         """
         self.aircraft_types = aircraft_types
         self.num_scenes = num_scenes
@@ -97,6 +102,10 @@ class Dataset3D:
         self.pitch_range = pitch_range
         self.roll_range = roll_range
         self.yaw_range = yaw_range
+        self.task_mode = task_mode
+
+        if task_mode not in ['classification', 'pose', 'both']:
+            raise ValueError(f"Invalid task_mode: {task_mode}. Must be 'classification', 'pose', or 'both'")
 
         # Initialize configuration and providers with fallback
         self.config = get_config()
@@ -281,22 +290,31 @@ class Dataset3D:
                     depth_path = os.path.join(output_dir, split_name, 'depth', depth_filename)
                     depth_map.save(depth_path)
 
-                # Create annotation
+                # Create annotation based on task mode
                 annotation = {
                     'scene_id': scene_idx,
                     'view_id': view_idx,
                     'image_path': image_path,
-                    'depth_path': depth_path,
-                    'aircraft_type': aircraft_type,
-                    'aircraft_pose': aircraft_pose,
-                    'camera_position': camera.position.tolist(),
-                    'camera_target': camera.target.tolist(),
                     'image_size': self.image_size
                 }
 
-                # Add OBB data if computed
-                if obb_data is not None:
-                    annotation['oriented_bbox'] = obb_data
+                # Add classification data if needed
+                if self.task_mode in ['classification', 'both']:
+                    annotation['aircraft_type'] = aircraft_type
+
+                # Add pose data if needed
+                if self.task_mode in ['pose', 'both']:
+                    annotation['aircraft_pose'] = aircraft_pose
+                    annotation['camera_position'] = camera.position.tolist()
+                    annotation['camera_target'] = camera.target.tolist()
+
+                    # Add depth path if available
+                    if depth_path:
+                        annotation['depth_path'] = depth_path
+
+                    # Add OBB data if computed
+                    if obb_data is not None:
+                        annotation['oriented_bbox'] = obb_data
 
                 annotations.append(annotation)
 

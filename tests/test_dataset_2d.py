@@ -75,12 +75,20 @@ class TestDataset2D(unittest.TestCase):
         """Test aircraft rendering produces valid images"""
         aircraft_model = self.dataset.aircraft_models['F15']
         pose = self.dataset._generate_random_pose()
-        
-        image = self.dataset._render_aircraft(aircraft_model, pose)
-        
+
+        image, bbox_data = self.dataset._render_aircraft(aircraft_model, pose)
+
         self.assertIsInstance(image, Image.Image)
         self.assertEqual(image.size, self.dataset.image_size)
         self.assertEqual(image.mode, 'RGB')
+
+        # Test bounding box data
+        self.assertIsInstance(bbox_data, dict)
+        if bbox_data:  # Only check if aircraft was rendered
+            self.assertIn('bbox_2d', bbox_data)
+            self.assertIn('center', bbox_data)
+            self.assertIn('width', bbox_data)
+            self.assertIn('height', bbox_data)
     
     def test_small_dataset_generation(self):
         """Test generation of a small complete dataset"""

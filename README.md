@@ -140,24 +140,73 @@ Models are automatically loaded from `models/aircraft/`:
 - `b52.glb` - B-52 Stratofortress
 - `c130.obj` - C-130 Hercules
 
-## 3D Bounding Boxes for Pose Estimation
+## Task-Specific Dataset Generation
 
-Generate oriented 3D bounding boxes with **expanded rotation ranges** for robust pose estimation training:
+Both 2D and 3D datasets support three task modes for flexible model training:
 
+### Task Modes
+
+**Classification Mode** (`task_mode='classification'`):
 ```python
-from aircraft_toolkit import Dataset3D
+from aircraft_toolkit import Dataset2D, Dataset3D
 
-dataset = Dataset3D(
+# 2D classification: Aircraft type detection from silhouettes
+dataset_2d = Dataset2D(
+    aircraft_types=['F15', 'B52', 'C130'],
+    num_samples=1000,
+    task_mode='classification'  # Only aircraft type labels
+)
+
+# 3D classification: Aircraft type detection from renders
+dataset_3d = Dataset3D(
     aircraft_types=['F15', 'B52', 'C130'],
     num_scenes=100,
-    include_oriented_bboxes=True,  # Enable 3D bounding boxes
-    image_size=(512, 512),
+    task_mode='classification'  # Only aircraft type labels
+)
+```
+
+**Pose Estimation Mode** (`task_mode='pose'`):
+```python
+# 2D pose: 6DOF pose from silhouettes + 2D bounding boxes
+dataset_2d = Dataset2D(
+    aircraft_types=['F15', 'B52', 'C130'],
+    num_samples=1000,
+    task_mode='pose',  # Pose + bounding boxes only
+    pose_range={
+        'pitch': (-45, 45),
+        'roll': (-30, 30),
+        'yaw': (-180, 180)
+    }
+)
+
+# 3D pose: Multi-view pose estimation with expanded ranges
+dataset_3d = Dataset3D(
+    aircraft_types=['F15', 'B52', 'C130'],
+    num_scenes=100,
+    task_mode='pose',  # Pose + camera params only
+    include_oriented_bboxes=True,
     # EXPANDED ROTATION RANGES - Breaks 120° convergence barrier
     pitch_range=(-90, 90),    # 3x expansion from ±30°
     roll_range=(-180, 180),   # 12x expansion from ±15°
     yaw_range=(-180, 180)     # Full coverage
 )
-results = dataset.generate('output/pose_estimation_data')
+```
+
+**Multi-Task Mode** (`task_mode='both'`):
+```python
+# Complete annotations for multi-task learning
+dataset_2d = Dataset2D(
+    aircraft_types=['F15', 'B52', 'C130'],
+    num_samples=1000,
+    task_mode='both'  # Classification + pose + bounding boxes
+)
+
+dataset_3d = Dataset3D(
+    aircraft_types=['F15', 'B52', 'C130'],
+    num_scenes=100,
+    task_mode='both',  # Classification + pose + all features
+    include_oriented_bboxes=True
+)
 ```
 
 ### **Breaking the 120° Convergence Barrier**

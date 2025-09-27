@@ -64,6 +64,65 @@ Dataset3D(
 
 **Results:** 30x larger pose space for breakthrough model performance
 
+## Task-Specific Dataset Generation
+
+Both 2D and 3D datasets support flexible task modes for targeted training:
+
+### Task Mode Examples
+
+**Classification Only:**
+```python
+from aircraft_toolkit import Dataset2D, Dataset3D
+
+# Generate datasets for aircraft type detection
+dataset_2d = Dataset2D(
+    aircraft_types=['F15', 'B52', 'C130'],
+    num_samples=5000,
+    task_mode='classification'  # Only aircraft type labels
+)
+
+dataset_3d = Dataset3D(
+    aircraft_types=['F15', 'B52', 'C130'],
+    num_scenes=1000,
+    task_mode='classification'  # Only aircraft type labels
+)
+```
+
+**Pose Estimation Only:**
+```python
+# Generate datasets for 6DOF pose estimation
+dataset_2d = Dataset2D(
+    aircraft_types=['F15', 'B52', 'C130'],
+    num_samples=5000,
+    task_mode='pose',  # Pose + bounding boxes only
+    pose_range={
+        'pitch': (-90, 90),    # Expanded for better training
+        'roll': (-180, 180),
+        'yaw': (-180, 180)
+    }
+)
+
+dataset_3d = Dataset3D(
+    aircraft_types=['F15', 'B52', 'C130'],
+    num_scenes=1000,
+    task_mode='pose',  # Pose + camera params only
+    include_oriented_bboxes=True,
+    pitch_range=(-90, 90),     # Barrier-breaking ranges
+    roll_range=(-180, 180)
+)
+```
+
+**Multi-Task Learning:**
+```python
+# Generate complete annotations for joint training
+dataset_both = Dataset3D(
+    aircraft_types=['F15', 'B52', 'C130'],
+    num_scenes=1000,
+    task_mode='both',  # Classification + pose + all features
+    include_oriented_bboxes=True
+)
+```
+
 ### `aircraft_40k_expanded_rotations` Dataset
 - **40,000 images** with expanded rotation ranges
 - **Generated:** Sep 25, 2025
