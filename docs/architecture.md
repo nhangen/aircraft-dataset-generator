@@ -89,6 +89,7 @@ aircraft-data-toolkit/
 ## Core Components
 
 ### 1. Aircraft Model System
+
 ```python
 from aircraft_toolkit.models.base_model import BaseAircraft
 
@@ -97,15 +98,15 @@ class BaseAircraft:
         self.name = name
         self.aircraft_type = aircraft_type
         self.components = {}  # wings, fuselage, tail, etc.
-        
+
     def define_silhouette(self) -> List[Tuple[float, float]]:
         """Define 2D silhouette points"""
         pass
-        
+
     def define_3d_keypoints(self) -> Dict[str, Tuple[float, float, float]]:
         """Define 3D keypoints (nose, wing tips, tail, etc.)"""
         pass
-        
+
     def get_bounding_box_3d(self) -> Tuple[Tuple[float, float, float], Tuple[float, float, float]]:
         """Get 3D bounding box (min_point, max_point)"""
         pass
@@ -114,7 +115,7 @@ class BaseAircraft:
 class F15Fighter(BaseAircraft):
     def __init__(self):
         super().__init__("F-15 Eagle", "fighter")
-        
+
     def define_silhouette(self):
         return [
             # Fuselage points (clockwise)
@@ -127,7 +128,7 @@ class F15Fighter(BaseAircraft):
             (0.2, -0.12),  # Forward fuselage bottom
             (0.6, -0.08),  # Lower nose
         ]
-        
+
     def define_3d_keypoints(self):
         return {
             'nose': (0.8, 0.0, 0.0),
@@ -142,6 +143,7 @@ class F15Fighter(BaseAircraft):
 ```
 
 ### 2. Dataset Generation API
+
 ```python
 from aircraft_toolkit.core import Dataset2D, Dataset3D
 
@@ -154,8 +156,8 @@ class Dataset2D:
                  augmentations: List = None,
                  background_type: str = 'gradient'):
         pass
-        
-    def generate(self, 
+
+    def generate(self,
                 output_dir: str,
                 split_ratios: Tuple[float, float, float] = (0.7, 0.2, 0.1),
                 annotation_format: str = 'coco',
@@ -173,7 +175,7 @@ class Dataset3D:
                  include_depth_maps: bool = True,
                  include_surface_normals: bool = False):
         pass
-        
+
     def generate(self,
                 output_dir: str,
                 split_ratios: Tuple[float, float, float] = (0.7, 0.2, 0.1),
@@ -184,13 +186,14 @@ class Dataset3D:
 ```
 
 ### 3. Annotation Format System
+
 ```python
 from aircraft_toolkit.annotations.formats import COCOExporter
 
 class COCOExporter:
     def __init__(self, dataset_path: str):
         self.dataset_path = dataset_path
-        
+
     def export(self, output_file: str):
         """Export to COCO format"""
         coco_data = {
@@ -209,7 +212,7 @@ class COCOExporter:
             ]
         }
         # ... populate with dataset data
-        
+
 # Usage
 from aircraft_toolkit.annotations.formats import COCOExporter, YOLOExporter
 
@@ -222,6 +225,7 @@ yolo_exporter.export('labels/')
 ```
 
 ### 4. Custom Aircraft Builder
+
 ```python
 from aircraft_toolkit.models.custom import CustomAircraft
 
@@ -230,19 +234,19 @@ class CustomAircraft(BaseAircraft):
         super().__init__(name, "custom")
         self.silhouette_points = []
         self.keypoints_3d = {}
-        
+
     def add_fuselage(self, length: float, width: float, height: float):
         """Add fuselage component"""
         pass
-        
+
     def add_wings(self, span: float, chord: float, sweep_angle: float = 0):
         """Add wing component"""
         pass
-        
+
     def add_tail(self, height: float, area: float, vertical: bool = True):
         """Add tail component"""
         pass
-        
+
     def build(self):
         """Finalize aircraft model"""
         self._generate_silhouette()
@@ -259,6 +263,7 @@ custom_aircraft.build()
 ## Advanced Features
 
 ### 1. Atmospheric Effects
+
 ```python
 from aircraft_toolkit.augmentation.atmospheric import WeatherEffects
 
@@ -277,6 +282,7 @@ dataset_2d = Dataset2D(
 ```
 
 ### 2. Batch Processing
+
 ```python
 from aircraft_toolkit.utils.batch import BatchProcessor
 
@@ -293,6 +299,7 @@ processor.generate_datasets(datasets, output_base_dir='generated_datasets')
 ```
 
 ### 3. Dataset Validation and Statistics
+
 ```python
 from aircraft_toolkit.utils.validation import DatasetValidator
 from aircraft_toolkit.utils.statistics import DatasetStats
@@ -313,6 +320,7 @@ print(f"Pose angle coverage: {stats.pose_coverage}")
 ## Usage Examples
 
 ### 1. Quick Start - 2D Dataset
+
 ```python
 from aircraft_toolkit import Dataset2D
 
@@ -331,6 +339,7 @@ dataset.generate(
 ```
 
 ### 2. Advanced 3D Dataset with Custom Settings
+
 ```python
 from aircraft_toolkit import Dataset3D
 from aircraft_toolkit.augmentation import GeometricAugmentation, PhotometricAugmentation
@@ -363,6 +372,7 @@ dataset_3d.generate(
 ```
 
 ### 3. Custom Aircraft and Export
+
 ```python
 from aircraft_toolkit.models.custom import CustomAircraft
 from aircraft_toolkit.annotations.formats import YOLOExporter

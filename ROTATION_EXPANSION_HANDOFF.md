@@ -7,6 +7,7 @@ Pose estimation models trained on traditional aircraft datasets were hitting a *
 ## Root Cause Analysis
 
 **Identified Constraint:** Original dataset had severely limited rotation ranges:
+
 - **Pitch:** ±30° (only 60° coverage)
 - **Roll:** ±15° (only 30° coverage)
 - **Yaw:** ±180° (full 360° coverage)
@@ -35,12 +36,14 @@ Dataset3D(
 ### 2. **Generated Dataset: `aircraft_40k_expanded_rotations`**
 
 **Specifications:**
+
 - **40,000 images** (5,000 scenes × 8 views)
 - **Split:** 28k train / 8k val / 4k test
 - **Format:** PyVista 3D renders with oriented bounding boxes
 - **Generation time:** 114 minutes (batched with subprocess isolation)
 
 **Validation Results:**
+
 - **Pitch range:** -87.8° to 89.6° (177.4° coverage)
 - **Roll range:** -179.0° to 173.9° (352.8° coverage)
 - **Constraint violations:** 69.6% pitch, 92.0% roll (breaking old limits)
@@ -49,6 +52,7 @@ Dataset3D(
 ### 3. **Comprehensive Testing**
 
 Created unit tests in `tests/test_rotation_ranges.py`:
+
 - ✅ Default rotation ranges (backward compatibility)
 - ✅ Custom rotation ranges (new functionality)
 - ✅ Edge case handling (near gimbal lock)
@@ -60,11 +64,13 @@ Created unit tests in `tests/test_rotation_ranges.py`:
 ### Expected Model Performance Improvements
 
 **Before (120° barrier):**
+
 - Models plateau at ~120° rotation error
 - Unable to learn orientations beyond training distribution
 - Geodesic distance ceiling imposed by constrained data
 
 **After (expanded ranges):**
+
 - **30x larger pose manifold** for training
 - **Full SO(3) rotation coverage** enables proper extrapolation
 - **Theoretical barrier removed** - models can now achieve sub-120° errors
@@ -79,6 +85,7 @@ Created unit tests in `tests/test_rotation_ranges.py`:
 ## Technical Implementation Details
 
 ### Memory Management
+
 - **Subprocess isolation** prevents PyVista GPU memory leaks
 - **Batch processing** (50 scenes per batch) maintains stability
 - **100 successful batches** with zero memory-related failures
@@ -114,6 +121,7 @@ Created unit tests in `tests/test_rotation_ranges.py`:
 ```
 
 **Format Benefits:**
+
 - **Consistent structure** across 2D and 3D datasets
 - **Easier model training** with unified data loading
 - **Future-proof** annotation schema
@@ -124,6 +132,7 @@ Created unit tests in `tests/test_rotation_ranges.py`:
 Both 2D and 3D datasets now support flexible task modes:
 
 ### Classification Mode (`task_mode='classification'`)
+
 ```python
 dataset = Dataset3D(
     aircraft_types=['F15', 'B52', 'C130'],
@@ -131,11 +140,13 @@ dataset = Dataset3D(
     task_mode='classification'  # Only aircraft type labels
 )
 ```
+
 - **Use case**: Aircraft type detection/classification
 - **Annotations**: Only `aircraft_type` field
 - **Training**: Classification models, object detection
 
 ### Pose Estimation Mode (`task_mode='pose'`)
+
 ```python
 dataset = Dataset3D(
     aircraft_types=['F15', 'B52', 'C130'],
@@ -146,11 +157,13 @@ dataset = Dataset3D(
     roll_range=(-180, 180)
 )
 ```
+
 - **Use case**: 6DOF pose estimation training
 - **Annotations**: `aircraft_pose`, `camera_position`, `oriented_bbox`, `depth_path`
 - **Training**: Pose regression models, 3D reconstruction
 
 ### Multi-Task Mode (`task_mode='both'`)
+
 ```python
 dataset = Dataset3D(
     aircraft_types=['F15', 'B52', 'C130'],
@@ -158,11 +171,13 @@ dataset = Dataset3D(
     task_mode='both'  # Complete annotations
 )
 ```
+
 - **Use case**: Multi-task learning (classification + pose)
 - **Annotations**: All fields included
 - **Training**: Joint classification and pose estimation models
 
 ### File Locations
+
 - **Dataset:** `aircraft_40k_expanded_rotations/`
 - **Annotations:** `train_annotations.json`, `val_annotations.json`, `test_annotations.json`
 - **Images:** `train/images/`, `val/images/`, `test/images/`
