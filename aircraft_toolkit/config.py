@@ -5,12 +5,12 @@ This module handles configuration loading, validation, and provider
 selection for the aircraft dataset generation toolkit.
 """
 
-import os
 import json
 import logging
+import os
+from dataclasses import asdict, dataclass
 from pathlib import Path
-from typing import Dict, Any, Optional
-from dataclasses import dataclass, asdict
+from typing import Any, Optional
 
 logger = logging.getLogger(__name__)
 
@@ -18,10 +18,11 @@ logger = logging.getLogger(__name__)
 @dataclass
 class ProviderConfig:
     """Configuration for a model provider."""
+
     name: str
     enabled: bool = True
-    config: Optional[Dict[str, Any]] = None
-    detail_level: str = 'medium'
+    config: Optional[dict[str, Any]] = None
+    detail_level: str = "medium"
     priority: int = 1  # Higher priority = preferred provider
 
     def __post_init__(self):
@@ -32,7 +33,8 @@ class ProviderConfig:
 @dataclass
 class DatasetConfig:
     """Configuration for dataset generation."""
-    output_format: str = 'custom_3d'
+
+    output_format: str = "custom_3d"
     image_size: tuple = (512, 512)
     views_per_scene: int = 8
     camera_distance: tuple = (8, 12)
@@ -45,8 +47,9 @@ class DatasetConfig:
 @dataclass
 class AircraftConfig:
     """Configuration for aircraft generation."""
-    model_provider: str = 'auto'  # 'auto', 'basic', 'tigl', etc.
-    detail_level: str = 'medium'
+
+    model_provider: str = "auto"  # 'auto', 'basic', 'tigl', etc.
+    detail_level: str = "medium"
     scaling_factor: float = 10.0
     center_models: bool = True
     compute_normals: bool = True
@@ -55,7 +58,8 @@ class AircraftConfig:
 @dataclass
 class Config:
     """Main configuration class."""
-    providers: Dict[str, ProviderConfig] = None
+
+    providers: dict[str, ProviderConfig] = None
     dataset: DatasetConfig = None
     aircraft: AircraftConfig = None
 
@@ -67,25 +71,21 @@ class Config:
         if self.aircraft is None:
             self.aircraft = AircraftConfig()
 
-    def _get_default_providers(self) -> Dict[str, ProviderConfig]:
+    def _get_default_providers(self) -> dict[str, ProviderConfig]:
         """Get default provider configurations."""
         providers = {
-            'basic': ProviderConfig(
-                name='basic',
-                enabled=True,
-                priority=1,
-                detail_level='low'
-            )
+            "basic": ProviderConfig(name="basic", enabled=True, priority=1, detail_level="low")
         }
 
         # Add PyVista provider if available
         try:
             import pyvista
-            providers['pyvista'] = ProviderConfig(
-                name='pyvista',
+
+            providers["pyvista"] = ProviderConfig(
+                name="pyvista",
                 enabled=True,
                 priority=100,  # Highest priority - uses real models
-                detail_level='high'
+                detail_level="high",
             )
         except ImportError:
             pass
@@ -99,7 +99,7 @@ class Config:
         Returns:
             Name of preferred provider
         """
-        if self.aircraft.model_provider != 'auto':
+        if self.aircraft.model_provider != "auto":
             return self.aircraft.model_provider
 
         # Import here to avoid circular imports
@@ -107,7 +107,8 @@ class Config:
 
         available_providers = list_providers()
         enabled_providers = [
-            (name, config) for name, config in self.providers.items()
+            (name, config)
+            for name, config in self.providers.items()
             if config.enabled and name in available_providers
         ]
 
@@ -119,31 +120,27 @@ class Config:
 
         return enabled_providers[0][0]
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Convert config to dictionary."""
         return asdict(self)
 
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> 'Config':
+    def from_dict(cls, data: dict[str, Any]) -> "Config":
         """Create config from dictionary."""
         providers = {}
-        if 'providers' in data:
-            for name, provider_data in data['providers'].items():
+        if "providers" in data:
+            for name, provider_data in data["providers"].items():
                 providers[name] = ProviderConfig(**provider_data)
 
         dataset_config = DatasetConfig()
-        if 'dataset' in data:
-            dataset_config = DatasetConfig(**data['dataset'])
+        if "dataset" in data:
+            dataset_config = DatasetConfig(**data["dataset"])
 
         aircraft_config = AircraftConfig()
-        if 'aircraft' in data:
-            aircraft_config = AircraftConfig(**data['aircraft'])
+        if "aircraft" in data:
+            aircraft_config = AircraftConfig(**data["aircraft"])
 
-        return cls(
-            providers=providers,
-            dataset=dataset_config,
-            aircraft=aircraft_config
-        )
+        return cls(providers=providers, dataset=dataset_config, aircraft=aircraft_config)
 
 
 class ConfigManager:
@@ -162,9 +159,9 @@ class ConfigManager:
     def _get_default_config_file(self) -> str:
         """Get default configuration file path."""
         # Try user config directory first
-        config_dir = Path.home() / '.aircraft_toolkit'
+        config_dir = Path.home() / ".aircraft_toolkit"
         config_dir.mkdir(exist_ok=True)
-        return str(config_dir / 'config.json')
+        return str(config_dir / "config.json")
 
     def load_config(self) -> Config:
         """
@@ -178,7 +175,7 @@ class ConfigManager:
 
         try:
             if os.path.exists(self.config_file):
-                with open(self.config_file, 'r') as f:
+                with open(self.config_file) as f:
                     data = json.load(f)
                 self._config = Config.from_dict(data)
                 logger.info(f"Loaded configuration from {self.config_file}")
@@ -201,7 +198,7 @@ class ConfigManager:
         """
         try:
             os.makedirs(os.path.dirname(self.config_file), exist_ok=True)
-            with open(self.config_file, 'w') as f:
+            with open(self.config_file, "w") as f:
                 json.dump(config.to_dict(), f, indent=2)
             self._config = config
             logger.info(f"Saved configuration to {self.config_file}")
@@ -212,7 +209,7 @@ class ConfigManager:
         """Get current configuration."""
         return self.load_config()
 
-    def update_provider_config(self, provider_name: str, config: Dict[str, Any]):
+    def update_provider_config(self, provider_name: str, config: dict[str, Any]):
         """
         Update configuration for a specific provider.
 

@@ -1,17 +1,19 @@
 """3D Aircraft Dataset Generation with Multi-View Rendering"""
 
-import os
 import json
-import math
-import numpy as np
 import logging
-from typing import List, Tuple, Dict, Optional
+import math
+import os
+from typing import Optional
+
+import numpy as np
 from PIL import Image, ImageDraw
 from tqdm import tqdm
 
+from ..config import get_config
+
 # Import new provider system
 from ..providers import get_provider
-from ..config import get_config
 
 logger = logging.getLogger(__name__)
 
@@ -19,7 +21,9 @@ logger = logging.getLogger(__name__)
 class Camera:
     """3D camera for multi-view rendering"""
 
-    def __init__(self, position: np.ndarray, target: np.ndarray, up: np.ndarray = np.array([0, 1, 0])):
+    def __init__(
+        self, position: np.ndarray, target: np.ndarray, up: np.ndarray = np.array([0, 1, 0])
+    ):
         self.position = position
         self.target = target
         self.up = up
@@ -39,12 +43,19 @@ class Camera:
         up = np.cross(right, forward)
 
         # View matrix (transforms world coordinates to camera coordinates)
-        view_matrix = np.array([
-            [right[0], right[1], right[2], -np.dot(right, self.position)],
-            [up[0], up[1], up[2], -np.dot(up, self.position)],
-            [forward[0], forward[1], forward[2], -np.dot(forward, self.position)],  # Positive Z forward
-            [0, 0, 0, 1]
-        ])
+        view_matrix = np.array(
+            [
+                [right[0], right[1], right[2], -np.dot(right, self.position)],
+                [up[0], up[1], up[2], -np.dot(up, self.position)],
+                [
+                    forward[0],
+                    forward[1],
+                    forward[2],
+                    -np.dot(forward, self.position),
+                ],  # Positive Z forward
+                [0, 0, 0, 1],
+            ]
+        )
         return view_matrix
 
 
@@ -55,20 +66,22 @@ class Camera:
 class Dataset3D:
     """Generate 3D multi-view aircraft datasets with proper rendering"""
 
-    def __init__(self,
-                 aircraft_types: List[str],
-                 num_scenes: int,
-                 views_per_scene: int = 8,
-                 camera_distance: Tuple[float, float] = (8, 12),
-                 camera_height_range: Tuple[float, float] = (-5, 10),
-                 include_depth_maps: bool = True,
-                 include_surface_normals: bool = False,
-                 include_oriented_bboxes: bool = False,
-                 image_size: Tuple[int, int] = (512, 512),
-                 pitch_range: Tuple[float, float] = (-30, 30),
-                 roll_range: Tuple[float, float] = (-15, 15),
-                 yaw_range: Tuple[float, float] = (-180, 180),
-                 task_mode: str = 'both'):
+    def __init__(
+        self,
+        aircraft_types: list[str],
+        num_scenes: int,
+        views_per_scene: int = 8,
+        camera_distance: tuple[float, float] = (8, 12),
+        camera_height_range: tuple[float, float] = (-5, 10),
+        include_depth_maps: bool = True,
+        include_surface_normals: bool = False,
+        include_oriented_bboxes: bool = False,
+        image_size: tuple[int, int] = (512, 512),
+        pitch_range: tuple[float, float] = (-30, 30),
+        roll_range: tuple[float, float] = (-15, 15),
+        yaw_range: tuple[float, float] = (-180, 180),
+        task_mode: str = "both",
+    ):
         """
         Initialize 3D dataset generator
 
@@ -104,8 +117,10 @@ class Dataset3D:
         self.yaw_range = yaw_range
         self.task_mode = task_mode
 
-        if task_mode not in ['classification', 'pose', 'both']:
-            raise ValueError(f"Invalid task_mode: {task_mode}. Must be 'classification', 'pose', or 'both'")
+        if task_mode not in ["classification", "pose", "both"]:
+            raise ValueError(
+                f"Invalid task_mode: {task_mode}. Must be 'classification', 'pose', or 'both'"
+            )
 
         # Initialize configuration and providers with fallback
         self.config = get_config()
@@ -115,11 +130,15 @@ class Dataset3D:
         self.aircraft_models = self._load_aircraft_models()
 
         logger.info(f"3D Dataset Generator initialized with {self.provider_name} provider")
-        logger.info(f"Generating {num_scenes} scenes × {views_per_scene} views = {num_scenes * views_per_scene} total images")
+        logger.info(
+            f"Generating {num_scenes} scenes × {views_per_scene} views = {num_scenes * views_per_scene} total images"
+        )
         print(f"🛩️  3D Dataset Generator initialized with {self.provider_name} provider")
-        print(f"📊 {num_scenes} scenes × {views_per_scene} views = {num_scenes * views_per_scene} total images")
+        print(
+            f"📊 {num_scenes} scenes × {views_per_scene} views = {num_scenes * views_per_scene} total images"
+        )
 
-    def _select_working_provider(self) -> Tuple:
+    def _select_working_provider(self) -> tuple:
         """
         Select a provider that supports the requested aircraft types.
 
@@ -136,12 +155,18 @@ class Dataset3D:
             supported = preferred_provider.get_supported_aircraft()
 
             # Check if any requested aircraft are supported
-            available_aircraft = [ac.upper() for ac in self.aircraft_types if ac.upper() in supported]
+            available_aircraft = [
+                ac.upper() for ac in self.aircraft_types if ac.upper() in supported
+            ]
             if available_aircraft:
-                logger.info(f"Using preferred provider '{preferred_name}' with {len(available_aircraft)} supported aircraft")
+                logger.info(
+                    f"Using preferred provider '{preferred_name}' with {len(available_aircraft)} supported aircraft"
+                )
                 return preferred_name, preferred_provider
             else:
-                logger.warning(f"Preferred provider '{preferred_name}' supports no requested aircraft types")
+                logger.warning(
+                    f"Preferred provider '{preferred_name}' supports no requested aircraft types"
+                )
         except Exception as e:
             logger.warning(f"Preferred provider '{preferred_name}' failed: {e}")
 
@@ -157,9 +182,13 @@ class Dataset3D:
                 supported = provider.get_supported_aircraft()
 
                 # Check if any requested aircraft are supported
-                available_aircraft = [ac.upper() for ac in self.aircraft_types if ac.upper() in supported]
+                available_aircraft = [
+                    ac.upper() for ac in self.aircraft_types if ac.upper() in supported
+                ]
                 if available_aircraft:
-                    logger.info(f"Falling back to provider '{provider_name}' with {len(available_aircraft)} supported aircraft")
+                    logger.info(
+                        f"Falling back to provider '{provider_name}' with {len(available_aircraft)} supported aircraft"
+                    )
                     return provider_name, provider
             except Exception as e:
                 logger.warning(f"Provider '{provider_name}' failed: {e}")
@@ -167,7 +196,7 @@ class Dataset3D:
 
         raise RuntimeError(f"No provider available that supports any of: {self.aircraft_types}")
 
-    def _load_aircraft_models(self) -> Dict:
+    def _load_aircraft_models(self) -> dict:
         """Load 3D aircraft model definitions using provider system"""
         models = {}
 
@@ -177,31 +206,38 @@ class Dataset3D:
         for aircraft_type in self.aircraft_types:
             aircraft_key = aircraft_type.upper()
             if aircraft_key not in supported_aircraft:
-                logger.warning(f"Aircraft type {aircraft_key} not supported by {self.provider_name} provider")
+                logger.warning(
+                    f"Aircraft type {aircraft_key} not supported by {self.provider_name} provider"
+                )
                 continue
 
             try:
                 # Generate aircraft mesh using provider
                 mesh = self.model_provider.create_aircraft(
-                    aircraft_key,
-                    detail_level=self.config.aircraft.detail_level
+                    aircraft_key, detail_level=self.config.aircraft.detail_level
                 )
                 models[aircraft_key] = mesh
-                logger.info(f"Loaded {aircraft_key}: {mesh.num_vertices} vertices, {mesh.num_faces} faces")
+                logger.info(
+                    f"Loaded {aircraft_key}: {mesh.num_vertices} vertices, {mesh.num_faces} faces"
+                )
             except Exception as e:
                 logger.error(f"Failed to load {aircraft_key}: {e}")
                 continue
 
         if not models:
-            raise RuntimeError(f"No aircraft models could be loaded with {self.provider_name} provider")
+            raise RuntimeError(
+                f"No aircraft models could be loaded with {self.provider_name} provider"
+            )
 
         return models
 
-    def generate(self,
-                 output_dir: str,
-                 split_ratios: Tuple[float, float, float] = (0.7, 0.2, 0.1),
-                 annotation_format: str = 'custom_3d',
-                 num_workers: int = 1) -> Dict:
+    def generate(
+        self,
+        output_dir: str,
+        split_ratios: tuple[float, float, float] = (0.7, 0.2, 0.1),
+        annotation_format: str = "custom_3d",
+        num_workers: int = 1,
+    ) -> dict:
         """
         Generate 3D multi-view aircraft dataset
 
@@ -214,15 +250,15 @@ class Dataset3D:
         Returns:
             Dataset generation results
         """
-        print(f"🛩️  Generating 3D Multi-View Aircraft Dataset")
+        print("🛩️  Generating 3D Multi-View Aircraft Dataset")
         print(f"📊 {self.num_scenes} scenes, {len(self.aircraft_types)} aircraft types")
 
         # Create output directories
         os.makedirs(output_dir, exist_ok=True)
-        for split in ['train', 'val', 'test']:
-            os.makedirs(os.path.join(output_dir, split, 'images'), exist_ok=True)
+        for split in ["train", "val", "test"]:
+            os.makedirs(os.path.join(output_dir, split, "images"), exist_ok=True)
             if self.include_depth_maps:
-                os.makedirs(os.path.join(output_dir, split, 'depth'), exist_ok=True)
+                os.makedirs(os.path.join(output_dir, split, "depth"), exist_ok=True)
 
         # Calculate split sizes
         train_size = int(self.num_scenes * split_ratios[0])
@@ -230,29 +266,29 @@ class Dataset3D:
         test_size = self.num_scenes - train_size - val_size
 
         # Generate datasets
-        train_annotations = self._generate_split('train', train_size, output_dir)
-        val_annotations = self._generate_split('val', val_size, output_dir)
-        test_annotations = self._generate_split('test', test_size, output_dir)
+        train_annotations = self._generate_split("train", train_size, output_dir)
+        val_annotations = self._generate_split("val", val_size, output_dir)
+        test_annotations = self._generate_split("test", test_size, output_dir)
 
         # Save annotations
-        self._save_annotations(train_annotations, output_dir, 'train')
-        self._save_annotations(val_annotations, output_dir, 'val')
-        self._save_annotations(test_annotations, output_dir, 'test')
+        self._save_annotations(train_annotations, output_dir, "train")
+        self._save_annotations(val_annotations, output_dir, "val")
+        self._save_annotations(test_annotations, output_dir, "test")
 
         total_images = self.num_scenes * self.views_per_scene
 
         return {
-            'total_scenes': self.num_scenes,
-            'views_per_scene': self.views_per_scene,
-            'total_images': total_images,
-            'train_scenes': train_size,
-            'val_scenes': val_size,
-            'test_scenes': test_size,
-            'aircraft_types': self.aircraft_types,
-            'output_dir': output_dir
+            "total_scenes": self.num_scenes,
+            "views_per_scene": self.views_per_scene,
+            "total_images": total_images,
+            "train_scenes": train_size,
+            "val_scenes": val_size,
+            "test_scenes": test_size,
+            "aircraft_types": self.aircraft_types,
+            "output_dir": output_dir,
         }
 
-    def _generate_split(self, split_name: str, num_scenes: int, output_dir: str) -> List[Dict]:
+    def _generate_split(self, split_name: str, num_scenes: int, output_dir: str) -> list[dict]:
         """Generate scenes for a specific split"""
         annotations = []
 
@@ -275,63 +311,65 @@ class Dataset3D:
                 # Compute oriented bounding box if enabled
                 obb_data = None
                 if self.include_oriented_bboxes:
-                    obb_data = self._compute_oriented_bounding_box(aircraft_mesh, aircraft_pose, camera)
+                    obb_data = self._compute_oriented_bounding_box(
+                        aircraft_mesh, aircraft_pose, camera
+                    )
                     # Draw wireframe bounding box on the image
                     image = self._draw_bounding_box_wireframe(image, obb_data)
 
                 # Save images
                 image_filename = f"{split_name}_{scene_idx:06d}_{view_idx:02d}.png"
-                image_path = os.path.join(output_dir, split_name, 'images', image_filename)
+                image_path = os.path.join(output_dir, split_name, "images", image_filename)
                 image.save(image_path)
 
                 depth_path = None
                 if self.include_depth_maps and depth_map is not None:
                     depth_filename = f"{split_name}_{scene_idx:06d}_{view_idx:02d}_depth.png"
-                    depth_path = os.path.join(output_dir, split_name, 'depth', depth_filename)
+                    depth_path = os.path.join(output_dir, split_name, "depth", depth_filename)
                     depth_map.save(depth_path)
 
                 # Create annotation based on task mode
                 annotation = {
-                    'scene_id': scene_idx,
-                    'view_id': view_idx,
-                    'image_path': image_path,
-                    'image_size': self.image_size
+                    "scene_id": scene_idx,
+                    "view_id": view_idx,
+                    "image_path": image_path,
+                    "image_size": self.image_size,
                 }
 
                 # Add classification data if needed
-                if self.task_mode in ['classification', 'both']:
-                    annotation['aircraft_type'] = aircraft_type
+                if self.task_mode in ["classification", "both"]:
+                    annotation["aircraft_type"] = aircraft_type
 
                 # Add pose data if needed
-                if self.task_mode in ['pose', 'both']:
-                    annotation['aircraft_pose'] = aircraft_pose
-                    annotation['camera_position'] = camera.position.tolist()
-                    annotation['camera_target'] = camera.target.tolist()
+                if self.task_mode in ["pose", "both"]:
+                    annotation["aircraft_pose"] = aircraft_pose
+                    annotation["camera_position"] = camera.position.tolist()
+                    annotation["camera_target"] = camera.target.tolist()
 
                     # Add depth path if available
                     if depth_path:
-                        annotation['depth_path'] = depth_path
+                        annotation["depth_path"] = depth_path
 
                     # Add OBB data if computed
                     if obb_data is not None:
-                        annotation['oriented_bbox'] = obb_data
+                        annotation["oriented_bbox"] = obb_data
 
                 annotations.append(annotation)
 
         return annotations
 
-    def _generate_random_aircraft_pose(self) -> Dict:
+    def _generate_random_aircraft_pose(self) -> dict:
         """Generate random 6DOF aircraft pose"""
         return {
-            'position': [0.0, 0.0, 0.0],  # Aircraft at origin
-            'rotation': {
-                'pitch': np.random.uniform(*self.pitch_range),
-                'yaw': np.random.uniform(*self.yaw_range),
-                'roll': np.random.uniform(*self.roll_range)
-            }
+            "position": [0.0, 0.0, 0.0],  # Aircraft at origin
+            "rotation": {
+                "pitch": np.random.uniform(*self.pitch_range),
+                "yaw": np.random.uniform(*self.yaw_range),
+                "roll": np.random.uniform(*self.roll_range),
+            },
         }
 
-    def _generate_camera_positions(self) -> List[Camera]:
+    def _generate_camera_positions(self) -> list[Camera]:
         """Generate camera positions around the aircraft"""
         cameras = []
 
@@ -354,41 +392,47 @@ class Dataset3D:
 
         return cameras
 
-    def _render_view(self, aircraft_mesh, aircraft_pose: Dict, camera: Camera) -> Tuple[Image.Image, Optional[Image.Image]]:
+    def _render_view(
+        self, aircraft_mesh, aircraft_pose: dict, camera: Camera
+    ) -> tuple[Image.Image, Optional[Image.Image]]:
         """Render aircraft from camera viewpoint"""
         # Check if provider has its own rendering method (e.g., headless provider)
-        if hasattr(self.model_provider, 'render_view'):
+        if hasattr(self.model_provider, "render_view"):
             # Use provider's render method
             image = self.model_provider.render_view(
                 aircraft_mesh,
                 aircraft_pose=aircraft_pose,
                 camera=camera,
-                image_size=self.image_size
+                image_size=self.image_size,
             )
             return image, None  # No depth map for provider rendering
 
         # Check if PyVista is available for high-quality rendering
         try:
             import pyvista as pv
+
             return self._render_view_pyvista(aircraft_mesh, aircraft_pose, camera)
         except ImportError:
             # Fall back to basic rendering
             return self._render_view_basic(aircraft_mesh, aircraft_pose, camera)
 
-    def _render_view_pyvista(self, aircraft_mesh, aircraft_pose: Dict, camera: Camera) -> Tuple[Image.Image, Optional[Image.Image]]:
+    def _render_view_pyvista(
+        self, aircraft_mesh, aircraft_pose: dict, camera: Camera
+    ) -> tuple[Image.Image, Optional[Image.Image]]:
         """Render using PyVista with aggressive memory management to prevent GPU leaks"""
-        import pyvista as pv
-        import numpy as np
-        from PIL import Image
         import gc
         import os
+
+        import numpy as np
+        import pyvista as pv
+        from PIL import Image
 
         # Force PyVista to use off-screen rendering mode
         pv.OFF_SCREEN = True
 
         # Set environment variables to prevent context leaks
-        os.environ['MESA_GL_VERSION_OVERRIDE'] = '3.3'
-        os.environ['PYOPENGL_PLATFORM'] = 'egl'
+        os.environ["MESA_GL_VERSION_OVERRIDE"] = "3.3"
+        os.environ["PYOPENGL_PLATFORM"] = "egl"
 
         # Initialize variables for cleanup
         pv_mesh = None
@@ -402,39 +446,41 @@ class Dataset3D:
                 pass
 
             # Create PyVista mesh from aircraft mesh
-            faces_with_count = np.column_stack([
-                np.full(len(aircraft_mesh.faces), 3),  # Triangle count
-                aircraft_mesh.faces
-            ]).flatten()
+            faces_with_count = np.column_stack(
+                [np.full(len(aircraft_mesh.faces), 3), aircraft_mesh.faces]  # Triangle count
+            ).flatten()
 
             pv_mesh = pv.PolyData(aircraft_mesh.vertices, faces_with_count)
 
             # Apply aircraft pose transformation
-            rotation = aircraft_pose['rotation']
-            translation = aircraft_pose['position']
+            rotation = aircraft_pose["rotation"]
+            translation = aircraft_pose["position"]
 
             # Convert rotations to transformation matrix
             import math
-            pitch = math.radians(rotation['pitch'])
-            yaw = math.radians(rotation['yaw'])
-            roll = math.radians(rotation['roll'])
+
+            pitch = math.radians(rotation["pitch"])
+            yaw = math.radians(rotation["yaw"])
+            roll = math.radians(rotation["roll"])
 
             # Rotation matrices
-            R_x = np.array([
-                [1, 0, 0],
-                [0, math.cos(pitch), -math.sin(pitch)],
-                [0, math.sin(pitch), math.cos(pitch)]
-            ])
-            R_y = np.array([
-                [math.cos(yaw), 0, math.sin(yaw)],
-                [0, 1, 0],
-                [-math.sin(yaw), 0, math.cos(yaw)]
-            ])
-            R_z = np.array([
-                [math.cos(roll), -math.sin(roll), 0],
-                [math.sin(roll), math.cos(roll), 0],
-                [0, 0, 1]
-            ])
+            R_x = np.array(
+                [
+                    [1, 0, 0],
+                    [0, math.cos(pitch), -math.sin(pitch)],
+                    [0, math.sin(pitch), math.cos(pitch)],
+                ]
+            )
+            R_y = np.array(
+                [[math.cos(yaw), 0, math.sin(yaw)], [0, 1, 0], [-math.sin(yaw), 0, math.cos(yaw)]]
+            )
+            R_z = np.array(
+                [
+                    [math.cos(roll), -math.sin(roll), 0],
+                    [math.sin(roll), math.cos(roll), 0],
+                    [0, 0, 1],
+                ]
+            )
 
             # Combined rotation
             R = R_z @ R_y @ R_x
@@ -448,16 +494,13 @@ class Dataset3D:
             pv_mesh = pv_mesh.transform(transform, inplace=False)
 
             # Create plotter with specific context management
-            plotter = pv.Plotter(
-                off_screen=True,
-                window_size=self.image_size
-            )
+            plotter = pv.Plotter(off_screen=True, window_size=self.image_size)
 
             # Set background color (sky blue)
-            plotter.background_color = (135/255, 206/255, 235/255)
+            plotter.background_color = (135 / 255, 206 / 255, 235 / 255)
 
             # Add the mesh with basic shading
-            plotter.add_mesh(pv_mesh, color='lightgray', show_edges=False, lighting=True)
+            plotter.add_mesh(pv_mesh, color="lightgray", show_edges=False, lighting=True)
 
             # Reset camera to properly frame the mesh
             plotter.reset_camera()
@@ -493,7 +536,7 @@ class Dataset3D:
             if self.include_depth_maps:
                 # Use z-buffer approach for depth
                 depth_array = np.full(self.image_size[::-1], 255, dtype=np.uint8)  # White = far
-                depth_map = Image.fromarray(depth_array, mode='L')
+                depth_map = Image.fromarray(depth_array, mode="L")
 
             return image, depth_map
 
@@ -533,19 +576,23 @@ class Dataset3D:
                 # Reset global settings
                 pv.rcParams.reset_to_defaults()
                 # Clear any cached textures or buffers if available
-                if hasattr(pv, '_clear_cache'):
+                if hasattr(pv, "_clear_cache"):
                     pv._clear_cache()
             except:
                 pass
 
-    def _render_view_basic(self, aircraft_mesh, aircraft_pose: Dict, camera: Camera) -> Tuple[Image.Image, Optional[Image.Image]]:
+    def _render_view_basic(
+        self, aircraft_mesh, aircraft_pose: dict, camera: Camera
+    ) -> tuple[Image.Image, Optional[Image.Image]]:
         """Basic wireframe rendering fallback"""
         # Create rendered image
-        image = Image.new('RGB', self.image_size, color=(135, 206, 235))  # Sky blue
+        image = Image.new("RGB", self.image_size, color=(135, 206, 235))  # Sky blue
         draw = ImageDraw.Draw(image)
 
         # Transform aircraft vertices to camera space
-        transformed_vertices = self._transform_vertices(aircraft_mesh.vertices, aircraft_pose, camera)
+        transformed_vertices = self._transform_vertices(
+            aircraft_mesh.vertices, aircraft_pose, camera
+        )
 
         # Project 3D points to 2D screen coordinates
         projected_points = self._project_to_screen(transformed_vertices)
@@ -560,36 +607,36 @@ class Dataset3D:
 
         return image, depth_map
 
-    def _transform_vertices(self, vertices: np.ndarray, aircraft_pose: Dict, camera: Camera) -> np.ndarray:
+    def _transform_vertices(
+        self, vertices: np.ndarray, aircraft_pose: dict, camera: Camera
+    ) -> np.ndarray:
         """Transform aircraft vertices to camera coordinate system"""
         # Apply aircraft rotation
-        rotation = aircraft_pose['rotation']
+        rotation = aircraft_pose["rotation"]
 
         # Simple rotation matrices (pitch, yaw, roll)
-        pitch = math.radians(rotation['pitch'])
-        yaw = math.radians(rotation['yaw'])
-        roll = math.radians(rotation['roll'])
+        pitch = math.radians(rotation["pitch"])
+        yaw = math.radians(rotation["yaw"])
+        roll = math.radians(rotation["roll"])
 
         # Rotation around X (pitch)
-        R_x = np.array([
-            [1, 0, 0],
-            [0, math.cos(pitch), -math.sin(pitch)],
-            [0, math.sin(pitch), math.cos(pitch)]
-        ])
+        R_x = np.array(
+            [
+                [1, 0, 0],
+                [0, math.cos(pitch), -math.sin(pitch)],
+                [0, math.sin(pitch), math.cos(pitch)],
+            ]
+        )
 
         # Rotation around Y (yaw)
-        R_y = np.array([
-            [math.cos(yaw), 0, math.sin(yaw)],
-            [0, 1, 0],
-            [-math.sin(yaw), 0, math.cos(yaw)]
-        ])
+        R_y = np.array(
+            [[math.cos(yaw), 0, math.sin(yaw)], [0, 1, 0], [-math.sin(yaw), 0, math.cos(yaw)]]
+        )
 
         # Rotation around Z (roll)
-        R_z = np.array([
-            [math.cos(roll), -math.sin(roll), 0],
-            [math.sin(roll), math.cos(roll), 0],
-            [0, 0, 1]
-        ])
+        R_z = np.array(
+            [[math.cos(roll), -math.sin(roll), 0], [math.sin(roll), math.cos(roll), 0], [0, 0, 1]]
+        )
 
         # Combined rotation
         R = R_z @ R_y @ R_x
@@ -598,14 +645,16 @@ class Dataset3D:
         rotated_vertices = vertices @ R.T
 
         # Transform to homogeneous coordinates
-        homogeneous_vertices = np.hstack([rotated_vertices, np.ones((rotated_vertices.shape[0], 1))])
+        homogeneous_vertices = np.hstack(
+            [rotated_vertices, np.ones((rotated_vertices.shape[0], 1))]
+        )
 
         # Apply camera view matrix
         camera_vertices = homogeneous_vertices @ camera.view_matrix.T
 
         return camera_vertices[:, :3]  # Return 3D coordinates
 
-    def _project_to_screen(self, vertices_3d: np.ndarray) -> List[Tuple[int, int]]:
+    def _project_to_screen(self, vertices_3d: np.ndarray) -> list[tuple[int, int]]:
         """Project 3D vertices to 2D screen coordinates"""
         projected = []
 
@@ -628,7 +677,13 @@ class Dataset3D:
 
         return projected
 
-    def _render_faces(self, draw: ImageDraw.Draw, faces: List, projected_points: List[Tuple[int, int]], vertices_3d: np.ndarray):
+    def _render_faces(
+        self,
+        draw: ImageDraw.Draw,
+        faces: list,
+        projected_points: list[tuple[int, int]],
+        vertices_3d: np.ndarray,
+    ):
         """Render aircraft faces as polygons with depth-based shading"""
         # Sort faces by depth for proper rendering
         face_depths = []
@@ -658,14 +713,20 @@ class Dataset3D:
                             # Depth-based shading - much darker
                             shade = max(20, min(80, int(40 + depth * 4)))
                             fill_color = (shade, shade, shade)
-                            outline_color = (max(10, shade - 15), max(10, shade - 15), max(10, shade - 15))
+                            outline_color = (
+                                max(10, shade - 15),
+                                max(10, shade - 15),
+                                max(10, shade - 15),
+                            )
 
-                            draw.polygon(valid_points, fill=fill_color, outline=outline_color, width=1)
+                            draw.polygon(
+                                valid_points, fill=fill_color, outline=outline_color, width=1
+                            )
                         except:
                             # If polygon fails, just skip this face
                             pass
 
-    def _generate_depth_map(self, vertices_3d: np.ndarray, faces: List) -> Image.Image:
+    def _generate_depth_map(self, vertices_3d: np.ndarray, faces: list) -> Image.Image:
         """Generate depth map for the rendered view"""
         # Create depth image (simplified)
         depth_array = np.full(self.image_size[::-1], 255, dtype=np.uint8)  # Far = white
@@ -683,9 +744,9 @@ class Dataset3D:
                     # This is a simplified depth map - a real implementation would
                     # use proper rasterization
 
-        return Image.fromarray(depth_array, mode='L')
+        return Image.fromarray(depth_array, mode="L")
 
-    def _compute_oriented_bounding_box(self, mesh, aircraft_pose: Dict, camera: Camera) -> Dict:
+    def _compute_oriented_bounding_box(self, mesh, aircraft_pose: dict, camera: Camera) -> dict:
         """
         Compute 3D→2D oriented bounding box projection using full aircraft extents.
 
@@ -698,39 +759,40 @@ class Dataset3D:
             import pyvista as pv
 
             # Create PyVista mesh from aircraft mesh if needed
-            if hasattr(mesh, 'bounds'):
+            if hasattr(mesh, "bounds"):
                 pv_mesh = mesh
             else:
-                faces_with_count = np.column_stack([
-                    np.full(len(mesh.faces), 3),
-                    mesh.faces
-                ]).flatten()
+                faces_with_count = np.column_stack(
+                    [np.full(len(mesh.faces), 3), mesh.faces]
+                ).flatten()
                 pv_mesh = pv.PolyData(mesh.vertices, faces_with_count)
 
             # Apply the SAME transformation as the rendering pipeline
-            rotation = aircraft_pose['rotation']
-            translation = aircraft_pose['position']
+            rotation = aircraft_pose["rotation"]
+            translation = aircraft_pose["position"]
 
-            pitch = math.radians(rotation['pitch'])
-            yaw = math.radians(rotation['yaw'])
-            roll = math.radians(rotation['roll'])
+            pitch = math.radians(rotation["pitch"])
+            yaw = math.radians(rotation["yaw"])
+            roll = math.radians(rotation["roll"])
 
             # Rotation matrices (same as rendering)
-            R_x = np.array([
-                [1, 0, 0],
-                [0, math.cos(pitch), -math.sin(pitch)],
-                [0, math.sin(pitch), math.cos(pitch)]
-            ])
-            R_y = np.array([
-                [math.cos(yaw), 0, math.sin(yaw)],
-                [0, 1, 0],
-                [-math.sin(yaw), 0, math.cos(yaw)]
-            ])
-            R_z = np.array([
-                [math.cos(roll), -math.sin(roll), 0],
-                [math.sin(roll), math.cos(roll), 0],
-                [0, 0, 1]
-            ])
+            R_x = np.array(
+                [
+                    [1, 0, 0],
+                    [0, math.cos(pitch), -math.sin(pitch)],
+                    [0, math.sin(pitch), math.cos(pitch)],
+                ]
+            )
+            R_y = np.array(
+                [[math.cos(yaw), 0, math.sin(yaw)], [0, 1, 0], [-math.sin(yaw), 0, math.cos(yaw)]]
+            )
+            R_z = np.array(
+                [
+                    [math.cos(roll), -math.sin(roll), 0],
+                    [math.sin(roll), math.cos(roll), 0],
+                    [0, 0, 1],
+                ]
+            )
 
             R = R_z @ R_y @ R_x
             transform = np.eye(4)
@@ -768,16 +830,18 @@ class Dataset3D:
             z_max_local += z_padding
 
             # Create 8 corners in aircraft LOCAL coordinates
-            local_corners = np.array([
-                [x_min_local, y_min_local, z_min_local],  # 0: tail-port-bottom
-                [x_max_local, y_min_local, z_min_local],  # 1: nose-port-bottom
-                [x_min_local, y_max_local, z_min_local],  # 2: tail-starboard-bottom
-                [x_max_local, y_max_local, z_min_local],  # 3: nose-starboard-bottom
-                [x_min_local, y_min_local, z_max_local],  # 4: tail-port-top
-                [x_max_local, y_min_local, z_max_local],  # 5: nose-port-top
-                [x_min_local, y_max_local, z_max_local],  # 6: tail-starboard-top
-                [x_max_local, y_max_local, z_max_local],  # 7: nose-starboard-top
-            ])
+            local_corners = np.array(
+                [
+                    [x_min_local, y_min_local, z_min_local],  # 0: tail-port-bottom
+                    [x_max_local, y_min_local, z_min_local],  # 1: nose-port-bottom
+                    [x_min_local, y_max_local, z_min_local],  # 2: tail-starboard-bottom
+                    [x_max_local, y_max_local, z_min_local],  # 3: nose-starboard-bottom
+                    [x_min_local, y_min_local, z_max_local],  # 4: tail-port-top
+                    [x_max_local, y_min_local, z_max_local],  # 5: nose-port-top
+                    [x_min_local, y_max_local, z_max_local],  # 6: tail-starboard-top
+                    [x_max_local, y_max_local, z_max_local],  # 7: nose-starboard-top
+                ]
+            )
 
             # Transform corners to world coordinates using the same transformation
             corners_3d = []
@@ -864,27 +928,27 @@ class Dataset3D:
         if len(valid_corners) > 0:
             valid_corners = np.array(valid_corners)
             bbox_2d = {
-                'x_min': float(valid_corners[:, 0].min()),
-                'y_min': float(valid_corners[:, 1].min()),
-                'x_max': float(valid_corners[:, 0].max()),
-                'y_max': float(valid_corners[:, 1].max())
+                "x_min": float(valid_corners[:, 0].min()),
+                "y_min": float(valid_corners[:, 1].min()),
+                "x_max": float(valid_corners[:, 0].max()),
+                "y_max": float(valid_corners[:, 1].max()),
             }
-            bbox_2d['width'] = bbox_2d['x_max'] - bbox_2d['x_min']
-            bbox_2d['height'] = bbox_2d['y_max'] - bbox_2d['y_min']
-            bbox_2d['area'] = bbox_2d['width'] * bbox_2d['height']
+            bbox_2d["width"] = bbox_2d["x_max"] - bbox_2d["x_min"]
+            bbox_2d["height"] = bbox_2d["y_max"] - bbox_2d["y_min"]
+            bbox_2d["area"] = bbox_2d["width"] * bbox_2d["height"]
         else:
             bbox_2d = None
 
         return {
-            'corners_3d': corners_3d.tolist(),
-            'corners_2d': corners_2d.tolist(),
-            'visible_corners': visible_corners,
-            'bbox_2d': bbox_2d,
-            'obb_center_2d': corners_2d.mean(axis=0).tolist() if len(corners_2d) > 0 else [0, 0],
-            'num_visible': sum(visible_corners)
+            "corners_3d": corners_3d.tolist(),
+            "corners_2d": corners_2d.tolist(),
+            "visible_corners": visible_corners,
+            "bbox_2d": bbox_2d,
+            "obb_center_2d": corners_2d.mean(axis=0).tolist() if len(corners_2d) > 0 else [0, 0],
+            "num_visible": sum(visible_corners),
         }
 
-    def _draw_bounding_box_wireframe(self, image: Image.Image, obb_data: Dict) -> Image.Image:
+    def _draw_bounding_box_wireframe(self, image: Image.Image, obb_data: dict) -> Image.Image:
         """
         Draw 3D wireframe bounding box on the image using OpenCV.
 
@@ -902,8 +966,8 @@ class Dataset3D:
             # Convert PIL to OpenCV format
             cv_image = cv2.cvtColor(np.array(image), cv2.COLOR_RGB2BGR)
 
-            corners_2d = np.array(obb_data['corners_2d'])
-            visible_corners = obb_data['visible_corners']
+            corners_2d = np.array(obb_data["corners_2d"])
+            visible_corners = obb_data["visible_corners"]
 
             # Define the 12 edges of the bounding box
             # Corner order: 0=back-left-bottom, 1=back-right-bottom, 2=front-left-bottom, 3=front-right-bottom
@@ -920,21 +984,33 @@ class Dataset3D:
                 (7, 6),  # front-right to front-left (top)
                 (6, 4),  # front-left to back-left (top)
                 # Vertical edges
-                (0, 4), (1, 5), (2, 6), (3, 7)
+                (0, 4),
+                (1, 5),
+                (2, 6),
+                (3, 7),
             ]
 
             # Simple color scheme for edges
-            bottom_color = (0, 255, 255)    # Cyan for bottom edges
-            top_color = (0, 255, 0)         # Green for top edges
+            bottom_color = (0, 255, 255)  # Cyan for bottom edges
+            top_color = (0, 255, 0)  # Green for top edges
             vertical_color = (255, 255, 0)  # Yellow for vertical edges
 
             edge_colors = [
                 # Bottom face (cyan)
-                bottom_color, bottom_color, bottom_color, bottom_color,
+                bottom_color,
+                bottom_color,
+                bottom_color,
+                bottom_color,
                 # Top face (green)
-                top_color, top_color, top_color, top_color,
+                top_color,
+                top_color,
+                top_color,
+                top_color,
                 # Vertical edges (yellow)
-                vertical_color, vertical_color, vertical_color, vertical_color
+                vertical_color,
+                vertical_color,
+                vertical_color,
+                vertical_color,
             ]
 
             # Draw edges
@@ -945,37 +1021,43 @@ class Dataset3D:
                     end_point = tuple(map(int, corners_2d[end_idx]))
 
                     # Check if points are within reasonable bounds
-                    if (0 <= start_point[0] <= self.image_size[0] * 1.2 and
-                        0 <= start_point[1] <= self.image_size[1] * 1.2 and
-                        0 <= end_point[0] <= self.image_size[0] * 1.2 and
-                        0 <= end_point[1] <= self.image_size[1] * 1.2):
+                    if (
+                        0 <= start_point[0] <= self.image_size[0] * 1.2
+                        and 0 <= start_point[1] <= self.image_size[1] * 1.2
+                        and 0 <= end_point[0] <= self.image_size[0] * 1.2
+                        and 0 <= end_point[1] <= self.image_size[1] * 1.2
+                    ):
 
                         cv2.line(cv_image, start_point, end_point, edge_colors[i], 2)
 
             # Draw corner points with labels
             corner_colors = [
-                (255, 0, 0),    # Red for bottom corners
+                (255, 0, 0),  # Red for bottom corners
                 (255, 0, 0),
                 (255, 0, 0),
                 (255, 0, 0),
                 (255, 165, 0),  # Orange for top corners
                 (255, 165, 0),
                 (255, 165, 0),
-                (255, 165, 0)
+                (255, 165, 0),
             ]
 
             for i, (corner, visible) in enumerate(zip(corners_2d, visible_corners)):
                 if visible:
                     point = tuple(map(int, corner))
-                    if (0 <= point[0] <= self.image_size[0] and
-                        0 <= point[1] <= self.image_size[1]):
+                    if 0 <= point[0] <= self.image_size[0] and 0 <= point[1] <= self.image_size[1]:
                         # Draw corner point
                         cv2.circle(cv_image, point, 4, corner_colors[i], -1)
                         # Draw corner label
-                        cv2.putText(cv_image, str(i),
-                                  (point[0] + 6, point[1] - 6),
-                                  cv2.FONT_HERSHEY_SIMPLEX, 0.4,
-                                  corner_colors[i], 1)
+                        cv2.putText(
+                            cv_image,
+                            str(i),
+                            (point[0] + 6, point[1] - 6),
+                            cv2.FONT_HERSHEY_SIMPLEX,
+                            0.4,
+                            corner_colors[i],
+                            1,
+                        )
 
             # Add simple bounding box info
             if len(corners_2d) >= 8:
@@ -989,11 +1071,19 @@ class Dataset3D:
                 thickness = 1
 
                 # Add bounding box label
-                if (0 <= box_center[0] <= self.image_size[0] and
-                    0 <= box_center[1] <= self.image_size[1]):
-                    cv2.putText(cv_image, "3D BBOX",
-                               tuple(box_center + [10, -10]),
-                               font, font_scale, label_color, thickness)
+                if (
+                    0 <= box_center[0] <= self.image_size[0]
+                    and 0 <= box_center[1] <= self.image_size[1]
+                ):
+                    cv2.putText(
+                        cv_image,
+                        "3D BBOX",
+                        tuple(box_center + [10, -10]),
+                        font,
+                        font_scale,
+                        label_color,
+                        thickness,
+                    )
 
             # Convert back to PIL RGB
             rgb_image = cv2.cvtColor(cv_image, cv2.COLOR_BGR2RGB)
@@ -1003,8 +1093,8 @@ class Dataset3D:
             print(f"Warning: Could not draw bounding box wireframe: {e}")
             return image
 
-    def _save_annotations(self, annotations: List[Dict], output_dir: str, split_name: str):
+    def _save_annotations(self, annotations: list[dict], output_dir: str, split_name: str):
         """Save annotations in JSON format"""
         output_file = os.path.join(output_dir, f"{split_name}_3d_annotations.json")
-        with open(output_file, 'w') as f:
+        with open(output_file, "w") as f:
             json.dump(annotations, f, indent=2)
