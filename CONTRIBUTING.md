@@ -64,35 +64,44 @@ This project uses [pre-commit](https://pre-commit.com/) to maintain code quality
 
 ### What the Hooks Do
 
-Our pre-commit configuration includes:
+Our pre-commit configuration includes hooks that run **automatically** on commit and hooks that run **manually** on demand.
+
+**Automatic Hooks (run on every commit):**
 
 - **File Formatting:**
   - Remove trailing whitespace
   - Ensure files end with a newline
   - Fix mixed line endings
+  - Validate YAML, TOML, JSON, and XML syntax
 
 - **Code Formatting:**
   - **Black**: Auto-format Python code to consistent style
   - **isort**: Sort and organize imports
 
-- **Linting:**
-  - **Flake8**: Check code style and catch common errors
-  - **Ruff**: Fast Python linter with auto-fixes
+- **Safety Checks:**
+  - Detect private keys and merge conflicts
+  - Check Python AST validity
+  - Detect debug statements
+
+**Manual Hooks (run with `pre-commit run <hook-name> --all-files`):**
 
 - **Type Checking:**
   - **mypy**: Static type checking for type hints
 
 - **Security:**
   - **Bandit**: Check for common security issues
-  - Detect private keys in commits
+
+- **Code Quality:**
+  - **Ruff**: Fast Python linter with auto-fixes
+  - **Flake8**: Comprehensive code style checking
 
 - **Documentation:**
   - **interrogate**: Check docstring coverage
   - **markdownlint**: Lint Markdown files
-
-- **Configuration Files:**
-  - Validate YAML, TOML, and JSON syntax
   - **yamllint**: YAML file linting
+
+Note: Manual hooks are skipped in CI to allow gradual improvement of code quality
+without blocking development. They can be run locally to check code quality.
 
 ### Manual Hook Execution
 
