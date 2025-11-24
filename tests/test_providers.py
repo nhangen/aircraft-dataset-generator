@@ -250,6 +250,13 @@ class TestConfiguration:
         self.temp_dir = tempfile.mkdtemp()
         self.config_file = Path(self.temp_dir) / "test_config.json"
 
+        # Ensure providers are registered for tests
+        from aircraft_toolkit.providers import list_providers
+
+        providers = list_providers()
+        if "basic" not in providers:
+            ProviderRegistry.register("basic", BasicProvider)
+
     def teardown_method(self):
         """Clean up test fixtures."""
         shutil.rmtree(self.temp_dir)
