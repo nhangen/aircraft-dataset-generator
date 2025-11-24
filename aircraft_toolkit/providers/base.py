@@ -34,6 +34,10 @@ class AircraftMesh:
         if self.metadata is None:
             self.metadata = {}
 
+        # Ensure vertices are float type for geometric operations
+        self.vertices = np.asarray(self.vertices, dtype=np.float64)
+        self.faces = np.asarray(self.faces, dtype=np.int32)
+
         # Ensure correct shapes
         assert (
             self.vertices.ndim == 2 and self.vertices.shape[1] == 3

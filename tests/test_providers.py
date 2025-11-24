@@ -192,7 +192,6 @@ class TestTiGLProvider:
         except ImportError:
             self.tigl_available = False
 
-    @pytest.mark.skipif(not pytest.importorskip("trimesh", reason="trimesh not available"))
     def test_tigl_initialization(self):
         """Test TiGL provider initialization."""
         if not self.tigl_available:
@@ -201,7 +200,6 @@ class TestTiGLProvider:
         assert self.provider.cpacs_templates is not None
         assert len(self.provider.cpacs_templates) > 0
 
-    @pytest.mark.skipif(not pytest.importorskip("trimesh", reason="trimesh not available"))
     def test_tigl_supported_aircraft(self):
         """Test TiGL supported aircraft."""
         if not self.tigl_available:
@@ -212,7 +210,6 @@ class TestTiGLProvider:
             aircraft = self.provider.get_supported_aircraft()
             assert len(aircraft) > 0
 
-    @pytest.mark.skipif(not pytest.importorskip("trimesh", reason="trimesh not available"))
     def test_tigl_create_aircraft_without_tigl(self):
         """Test TiGL provider without TiGL installed."""
         if not self.tigl_available:
@@ -220,7 +217,6 @@ class TestTiGLProvider:
                 self.provider.create_aircraft("F15")
 
     @pytest.mark.integration
-    @pytest.mark.skipif(not pytest.importorskip("trimesh", reason="trimesh not available"))
     def test_tigl_create_aircraft_with_tigl(self):
         """Test TiGL aircraft creation (integration test)."""
         if not self.tigl_available:
@@ -266,7 +262,8 @@ class TestConfiguration:
         assert config.aircraft.model_provider == "auto"
         assert config.dataset.image_size == (512, 512)
         assert "basic" in config.providers
-        assert "tigl" in config.providers
+        # pyvista may or may not be available depending on environment
+        assert len(config.providers) >= 1
 
     def test_config_serialization(self):
         """Test config to/from dict."""
@@ -282,9 +279,9 @@ class TestConfiguration:
         """Test automatic provider selection."""
         config = Config()
 
-        # Should prefer higher priority provider
+        # Should prefer higher priority provider (pyvista if available, else basic)
         preferred = config.get_preferred_provider()
-        assert preferred in ["tigl", "basic"]  # Depends on availability
+        assert preferred in ["pyvista", "basic"]  # Depends on availability
 
     def test_preferred_provider_explicit(self):
         """Test explicit provider selection."""
