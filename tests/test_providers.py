@@ -9,7 +9,7 @@ from pathlib import Path
 import numpy as np
 import pytest
 
-import aircraft_toolkit.providers  # Import to trigger provider registration
+import aircraft_toolkit.providers  # noqa: F401 - Import triggers provider registration
 from aircraft_toolkit.config import Config
 from aircraft_toolkit.providers.base import AircraftMesh
 from aircraft_toolkit.providers.basic import BasicProvider
