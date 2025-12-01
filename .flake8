@@ -1,0 +1,77 @@
+[flake8]
+# Configuration for Flake8
+# See https://flake8.pycqa.org/en/latest/user/configuration.html
+
+# Maximum line length
+max-line-length = 100
+
+# Maximum cyclomatic complexity
+max-complexity = 15
+
+# Select error codes to enable
+select = E,W,F,C,N,B
+
+# Error codes to ignore
+ignore =
+    # E203: whitespace before ':' (conflicts with black)
+    E203,
+    # E266: too many leading '#' for block comment
+    E266,
+    # E501: line too long (handled by black)
+    E501,
+    # W503: line break before binary operator (conflicts with black)
+    W503,
+    # W504: line break after binary operator (conflicts with black)
+    W504,
+    # B008: do not perform function calls in argument defaults
+    B008,
+    # N802: function name should be lowercase (some PyVista methods use camelCase)
+    N802,
+    # N806: variable in function should be lowercase
+    N806,
+
+# Exclude directories
+exclude =
+    .git,
+    __pycache__,
+    .venv,
+    venv,
+    env,
+    build,
+    dist,
+    *.egg-info,
+    .eggs,
+    .tox,
+    .mypy_cache,
+    .pytest_cache,
+    .coverage,
+    htmlcov,
+    models,
+    sample_images,
+
+# Per-file ignores
+per-file-ignores =
+    # Ignore unused imports in __init__.py files
+    __init__.py:F401,F403
+    # Ignore assert statements in tests
+    tests/*:S101
+    # Ignore import order in setup.py
+    setup.py:E402
+
+# Docstring settings (flake8-docstrings)
+docstring-convention = google
+# Ignore missing docstrings for these
+ignore-decorators = property,staticmethod
+
+# Count errors
+count = True
+# Show source code
+show-source = True
+# Show statistics
+statistics = True
+
+# Enable plugins
+# flake8-docstrings: D
+# flake8-bugbear: B
+# flake8-comprehensions: C4
+# flake8-simplify: SIM

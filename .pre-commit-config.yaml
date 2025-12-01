@@ -1,0 +1,190 @@
+# Pre-commit hooks configuration
+# See https://pre-commit.com for more information
+# See https://pre-commit.com/hooks.html for more hooks
+
+default_language_version:
+  python: python3
+
+repos:
+  # Pre-commit meta hooks
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.5.0
+    hooks:
+      # File formatting
+      - id: trailing-whitespace
+        args: [--markdown-linebreak-ext=md]
+      - id: end-of-file-fixer
+        exclude: '^(models/|sample_images/)'
+      - id: check-yaml
+        args: [--allow-multiple-documents]
+      - id: check-toml
+      - id: check-json
+      - id: check-xml
+
+      # Git checks
+      - id: check-added-large-files
+        args: [--maxkb=5000]
+        exclude: '^(models/|sample_images/)'
+      - id: check-merge-conflict
+      - id: check-case-conflict
+      - id: detect-private-key
+
+      # Python checks
+      - id: check-ast
+      - id: check-builtin-literals
+      - id: check-docstring-first
+      - id: debug-statements
+      - id: fix-byte-order-marker
+      - id: fix-encoding-pragma
+        args: [--remove]
+      - id: name-tests-test
+        args: [--pytest-test-first]
+        exclude: '^tests/conftest.py$'
+
+      # File type checks
+      - id: mixed-line-ending
+        args: [--fix=lf]
+
+  # Python code formatting with Black
+  - repo: https://github.com/psf/black
+    rev: 24.1.1
+    hooks:
+      - id: black
+        args: [--config=pyproject.toml]
+
+  # Import sorting with isort
+  - repo: https://github.com/PyCQA/isort
+    rev: 5.13.2
+    hooks:
+      - id: isort
+        args: [--settings-path=pyproject.toml]
+
+  # Python linting with Ruff (manual only - has pre-existing issues)
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.1.15
+    hooks:
+      # Run the linter - manual only to avoid blocking commits
+      - id: ruff
+        stages: [manual]
+        args: [--fix]
+      # Run the formatter (alternative to black, but we use black above)
+      # - id: ruff-format
+
+  # Flake8 - Python linting (manual only - has many pre-existing issues)
+  - repo: https://github.com/PyCQA/flake8
+    rev: 7.0.0
+    hooks:
+      - id: flake8
+        stages: [manual]
+        args: [--config=.flake8]
+        additional_dependencies:
+          - flake8-docstrings
+          - flake8-bugbear
+          - flake8-comprehensions
+          - flake8-simplify
+
+  # Type checking with mypy (manual only - has pre-existing errors)
+  - repo: https://github.com/pre-commit/mirrors-mypy
+    rev: v1.8.0
+    hooks:
+      - id: mypy
+        stages: [manual]
+        args: [--config-file=pyproject.toml]
+        additional_dependencies:
+          - types-setuptools
+          - numpy
+        exclude: '^(tests/|docs/|example_scripts/)'
+
+  # Security checks with Bandit (manual only for now)
+  - repo: https://github.com/PyCQA/bandit
+    rev: 1.7.6
+    hooks:
+      - id: bandit
+        stages: [manual]
+        args: [-c, pyproject.toml]
+        additional_dependencies: ["bandit[toml]"]
+        exclude: '^tests/'
+
+  # Docstring coverage check (manual only - baseline not yet established)
+  - repo: https://github.com/econchick/interrogate
+    rev: 1.5.0
+    hooks:
+      - id: interrogate
+        stages: [manual]
+        args:
+          - --verbose
+          - --fail-under=60
+          - --ignore-init-method
+          - --ignore-init-module
+          - --ignore-module
+          - --ignore-private
+          - --ignore-magic
+          - --exclude=tests
+          - --exclude=docs
+          - --exclude=example_scripts
+          - --exclude=setup.py
+        pass_filenames: false
+
+  # Markdown linting (manual only - requires Node.js: npm install -g markdownlint-cli)
+  - repo: https://github.com/igorshubovych/markdownlint-cli
+    rev: v0.39.0
+    hooks:
+      - id: markdownlint
+        stages: [manual]
+        args: [--fix]
+
+  # YAML linting (manual only)
+  - repo: https://github.com/adrienverge/yamllint
+    rev: v1.33.0
+    hooks:
+      - id: yamllint
+        stages: [manual]
+        args: [-c=.yamllint.yaml, -s]
+
+  # Check for common Python issues
+  - repo: https://github.com/pre-commit/pygrep-hooks
+    rev: v1.10.0
+    hooks:
+      - id: python-check-blanket-noqa
+      - id: python-check-blanket-type-ignore
+      - id: python-no-eval
+      - id: python-no-log-warn
+      - id: python-use-type-annotations
+      - id: rst-backticks
+      - id: rst-directive-colons
+      - id: rst-inline-touching-normal
+
+  # Jupyter notebook checks (manual only - no notebooks in repo currently)
+  - repo: https://github.com/nbQA-dev/nbQA
+    rev: 1.7.1
+    hooks:
+      - id: nbqa-black
+        stages: [manual]
+      - id: nbqa-isort
+        stages: [manual]
+      - id: nbqa-flake8
+        stages: [manual]
+
+# CI configuration
+ci:
+  autofix_commit_msg: |
+    [pre-commit.ci] auto fixes from pre-commit hooks
+
+    for more information, see https://pre-commit.ci
+  autofix_prs: true
+  autoupdate_branch: ''
+  autoupdate_commit_msg: '[pre-commit.ci] pre-commit autoupdate'
+  autoupdate_schedule: weekly
+  # Skip manual-only hooks in CI
+  skip:
+    - mypy
+    - bandit
+    - interrogate
+    - markdownlint
+    - yamllint
+    - flake8
+    - ruff
+    - nbqa-black
+    - nbqa-isort
+    - nbqa-flake8
+  submodules: false

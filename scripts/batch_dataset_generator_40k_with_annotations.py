@@ -4,10 +4,10 @@ Generate complete 40k aircraft dataset with PyVista rendering and OBB annotation
 Includes proper COCO-style JSON annotations saved to the dataset folder.
 """
 
-import os
 import json
-import time
+import os
 import subprocess
+import time
 from pathlib import Path
 
 OUTPUT_DIR = "aircraft_3d_pyvista_obb_40k"
@@ -16,26 +16,29 @@ BATCH_SIZE = 50  # scenes per batch
 VIEWS_PER_SCENE = 8
 STATE_FILE = f"{OUTPUT_DIR}_generation_state.json"
 
+
 def load_state():
     """Load generation state from file."""
     if os.path.exists(STATE_FILE):
-        with open(STATE_FILE, 'r') as f:
+        with open(STATE_FILE) as f:
             return json.load(f)
     return {
-        'batch_num': 0,
-        'total_generated': 0,
-        'train_scenes': 0,
-        'val_scenes': 0,
-        'test_scenes': 0,
-        'target_train': 3500,  # 70%
-        'target_val': 1000,    # 20%
-        'target_test': 500     # 10%
+        "batch_num": 0,
+        "total_generated": 0,
+        "train_scenes": 0,
+        "val_scenes": 0,
+        "test_scenes": 0,
+        "target_train": 3500,  # 70%
+        "target_val": 1000,  # 20%
+        "target_test": 500,  # 10%
     }
+
 
 def save_state(state):
     """Save generation state to file."""
-    with open(STATE_FILE, 'w') as f:
+    with open(STATE_FILE, "w") as f:
         json.dump(state, f, indent=2)
+
 
 def create_single_batch_script():
     """Create the single batch generation script."""
@@ -253,11 +256,13 @@ if __name__ == "__main__":
     with open("generate_single_batch_obb.py", "w") as f:
         f.write(script_content)
 
+
 def run_batch():
     """Run a single batch generation."""
     try:
-        result = subprocess.run(['python', 'generate_single_batch_obb.py'],
-                              capture_output=True, text=True, timeout=600)
+        result = subprocess.run(
+            ["python", "generate_single_batch_obb.py"], capture_output=True, text=True, timeout=600
+        )
         return result.returncode == 0, result.stdout, result.stderr
     except subprocess.TimeoutExpired:
         print("⚠️  Batch timed out after 10 minutes")
@@ -266,11 +271,12 @@ def run_batch():
         print(f"❌ Error running batch: {e}")
         return False, "", str(e)
 
+
 def merge_annotations():
     """Merge all batch annotation files into final COCO-style files."""
     print("\n🔗 Merging annotations...")
 
-    for split in ['train', 'val', 'test']:
+    for split in ["train", "val", "test"]:
         split_dir = f"{OUTPUT_DIR}/{split}"
         if not os.path.exists(split_dir):
             continue
@@ -283,7 +289,7 @@ def merge_annotations():
         all_annotations = []
         for batch_file in sorted(Path(annotations_dir).glob("batch_*_annotations.json")):
             try:
-                with open(batch_file, 'r') as f:
+                with open(batch_file) as f:
                     batch_data = json.load(f)
                     all_annotations.extend(batch_data)
             except Exception as e:
@@ -292,12 +298,14 @@ def merge_annotations():
         # Save merged annotations
         if all_annotations:
             merged_file = f"{split_dir}/annotations.json"
-            with open(merged_file, 'w') as f:
+            with open(merged_file, "w") as f:
                 json.dump(all_annotations, f, indent=2)
             print(f"✅ Merged {len(all_annotations)} annotations for {split}")
 
+
 def main():
-    print(f"""
+    print(
+        f"""
 ╔══════════════════════════════════════════════════════════════╗
 ║                AIRCRAFT 3D PYVISTA OBB 40K                  ║
 ╚══════════════════════════════════════════════════════════════╝
@@ -306,7 +314,8 @@ Dataset: {OUTPUT_DIR}
 Rendering: PyVista high-quality 3D with proper annotations
 Splits: train/val/test with COCO-style JSON annotations
 ══════════════════════════════════════════════════════════════
-""")
+"""
+    )
 
     # Create the single batch script
     create_single_batch_script()
@@ -318,8 +327,8 @@ Splits: train/val/test with COCO-style JSON annotations
     while True:
         # Check current state
         state = load_state()
-        total_target_scenes = state['target_train'] + state['target_val'] + state['target_test']
-        current_scenes = state['train_scenes'] + state['val_scenes'] + state['test_scenes']
+        total_target_scenes = state["target_train"] + state["target_val"] + state["target_test"]
+        current_scenes = state["train_scenes"] + state["val_scenes"] + state["test_scenes"]
 
         # Check if complete
         if current_scenes >= total_target_scenes:
@@ -327,10 +336,10 @@ Splits: train/val/test with COCO-style JSON annotations
             break
 
         # Determine current split
-        if state['train_scenes'] < state['target_train']:
+        if state["train_scenes"] < state["target_train"]:
             current_split = "train"
             split_progress = f"{state['train_scenes']}/{state['target_train']}"
-        elif state['val_scenes'] < state['target_val']:
+        elif state["val_scenes"] < state["target_val"]:
             current_split = "val"
             split_progress = f"{state['val_scenes']}/{state['target_val']}"
         else:
@@ -342,7 +351,8 @@ Splits: train/val/test with COCO-style JSON annotations
         elapsed = time.time() - start_time
         progress_pct = (current_scenes / total_target_scenes) * 100
 
-        print(f"""
+        print(
+            f"""
 ┌─────────────────────────────────────────┐
 │ Batch #{batch_count} - {current_split.upper()} split        │
 ├─────────────────────────────────────────┤
@@ -350,7 +360,8 @@ Splits: train/val/test with COCO-style JSON annotations
 │ Images: {state['total_generated']:,} created          │
 │ Current: {split_progress} {current_split} scenes       │
 │ Time: {elapsed/60:.1f} minutes elapsed          │
-└─────────────────────────────────────────┘""")
+└─────────────────────────────────────────┘"""
+        )
 
         # Run batch
         print("🚀 Running batch generation...", end=" ")
@@ -361,8 +372,8 @@ Splits: train/val/test with COCO-style JSON annotations
             consecutive_failures = 0
 
             # Show completion line from batch script
-            for line in stdout.split('\\n'):
-                if 'Batch Complete!' in line or 'Total progress:' in line:
+            for line in stdout.split("\\n"):
+                if "Batch Complete!" in line or "Total progress:" in line:
                     print(f"   {line}")
 
             # Small delay between batches
@@ -385,10 +396,11 @@ Splits: train/val/test with COCO-style JSON annotations
 
     # Final summary
     final_state = load_state()
-    total_final_images = final_state['total_generated']
+    total_final_images = final_state["total_generated"]
     final_time = (time.time() - start_time) / 60
 
-    print(f"""
+    print(
+        f"""
 ╔══════════════════════════════════════════════════════════════╗
 ║                     GENERATION SUMMARY                      ║
 ╚══════════════════════════════════════════════════════════════╝
@@ -401,11 +413,13 @@ Splits: train/val/test with COCO-style JSON annotations
 📁 Output directory: {OUTPUT_DIR}/
 📋 Annotations: COCO-style JSON with oriented bounding boxes
 ══════════════════════════════════════════════════════════════
-""")
+"""
+    )
 
     # Clean up
     if os.path.exists("generate_single_batch_obb.py"):
         os.remove("generate_single_batch_obb.py")
+
 
 if __name__ == "__main__":
     main()
