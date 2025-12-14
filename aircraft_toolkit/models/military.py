@@ -1,8 +1,8 @@
-"""Military aircraft model definitions"""
+# Military aircraft model definitions
 
 
 class BaseAircraft:
-    """Base class for aircraft models"""
+    # Base class for aircraft models
 
     def __init__(self, name: str, aircraft_type: str):
         self.name = name
@@ -10,7 +10,7 @@ class BaseAircraft:
         self.silhouette_points = []
 
     def get_silhouette_for_pose(self, pose: dict) -> list[tuple[float, float]]:
-        """Get aircraft silhouette points for given pose"""
+        # Get aircraft silhouette points for given pose
         import math
 
         # Get pose parameters
@@ -48,7 +48,7 @@ class BaseAircraft:
 
 
 class F15Fighter(BaseAircraft):
-    """F-15 Eagle fighter aircraft"""
+    # F-15 Eagle fighter aircraft
 
     def __init__(self):
         super().__init__("F-15 Eagle", "fighter")
@@ -99,7 +99,7 @@ class F15Fighter(BaseAircraft):
 
 
 class B52Bomber(BaseAircraft):
-    """B-52 Stratofortress bomber aircraft"""
+    # B-52 Stratofortress bomber aircraft
 
     def __init__(self):
         super().__init__("B-52 Stratofortress", "bomber")
@@ -153,7 +153,7 @@ class B52Bomber(BaseAircraft):
 
 
 class C130Transport(BaseAircraft):
-    """C-130 Hercules transport aircraft"""
+    # C-130 Hercules transport aircraft
 
     def __init__(self):
         super().__init__("C-130 Hercules", "transport")

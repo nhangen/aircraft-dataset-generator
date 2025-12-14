@@ -17,21 +17,21 @@ from aircraft_toolkit.core.dataset_3d import Dataset3D
 
 
 class TestRotationRanges(unittest.TestCase):
-    """Test rotation range parameters in Dataset3D"""
+    # Test rotation range parameters in Dataset3D
 
     def setUp(self):
-        """Set up test configuration"""
+        # Set up test configuration
         self.config = get_config()
         # Use basic provider for faster tests
         self.config.aircraft.model_provider = "basic"
         self.temp_dir = tempfile.mkdtemp()
 
     def tearDown(self):
-        """Clean up test files"""
+        # Clean up test files
         shutil.rmtree(self.temp_dir, ignore_errors=True)
 
     def test_default_rotation_ranges(self):
-        """Test that default rotation ranges match original constraints"""
+        # Test that default rotation ranges match original constraints
         dataset = Dataset3D(aircraft_types=["F15"], num_scenes=5, views_per_scene=2)
 
         # Generate small dataset to test rotation ranges
@@ -60,7 +60,7 @@ class TestRotationRanges(unittest.TestCase):
         self.assertLessEqual(rotations[:, 2].max(), 15.1)  # roll <= 15
 
     def test_custom_rotation_ranges(self):
-        """Test custom rotation ranges (the fix for 120° barrier)"""
+        # Test custom rotation ranges (the fix for 120° barrier)
         dataset = Dataset3D(
             aircraft_types=["F15"],
             num_scenes=10,  # More samples for better range testing
@@ -101,7 +101,7 @@ class TestRotationRanges(unittest.TestCase):
         self.assertGreater(roll_range, 60)  # Much larger than original ±15° = 30° range
 
     def test_rotation_range_validation(self):
-        """Test that rotation ranges are properly stored and used"""
+        # Test that rotation ranges are properly stored and used
         pitch_range = (-45, 45)
         roll_range = (-30, 30)
         yaw_range = (-120, 120)
@@ -121,7 +121,7 @@ class TestRotationRanges(unittest.TestCase):
         self.assertEqual(dataset.yaw_range, yaw_range)
 
     def test_extreme_rotation_ranges(self):
-        """Test extreme rotation ranges for edge cases"""
+        # Test extreme rotation ranges for edge cases
         dataset = Dataset3D(
             aircraft_types=["F15"],
             num_scenes=3,
@@ -138,7 +138,7 @@ class TestRotationRanges(unittest.TestCase):
         self.assertTrue(os.path.exists(annotation_file))
 
     def test_barrier_breaking_ranges(self):
-        """Test the specific ranges designed to break the 120° barrier"""
+        # Test the specific ranges designed to break the 120° barrier
         # These are the exact ranges from the solution
         dataset = Dataset3D(
             aircraft_types=["F15", "B52", "C130"],
@@ -208,7 +208,7 @@ class TestRotationRanges(unittest.TestCase):
 
 
 class TestRotationDistribution(unittest.TestCase):
-    """Test that rotations are uniformly distributed within ranges"""
+    # Test that rotations are uniformly distributed within ranges
 
     def setUp(self):
         self.config = get_config()
@@ -219,7 +219,7 @@ class TestRotationDistribution(unittest.TestCase):
         shutil.rmtree(self.temp_dir, ignore_errors=True)
 
     def test_uniform_distribution(self):
-        """Test that rotations are uniformly distributed"""
+        # Test that rotations are uniformly distributed
         dataset = Dataset3D(
             aircraft_types=["F15"],
             num_scenes=50,  # More samples for statistical testing

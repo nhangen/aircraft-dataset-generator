@@ -30,7 +30,7 @@ class AircraftMesh:
     metadata: dict = None
 
     def __post_init__(self):
-        """Validate mesh data after initialization."""
+        # Validate mesh data after initialization.
         if self.metadata is None:
             self.metadata = {}
 
@@ -53,16 +53,16 @@ class AircraftMesh:
 
     @property
     def num_vertices(self) -> int:
-        """Number of vertices in the mesh."""
+        # Number of vertices in the mesh.
         return len(self.vertices)
 
     @property
     def num_faces(self) -> int:
-        """Number of faces in the mesh."""
+        # Number of faces in the mesh.
         return len(self.faces)
 
     def compute_normals(self):
-        """Compute vertex normals if not present."""
+        # Compute vertex normals if not present.
         if self.normals is not None:
             return
 
@@ -118,7 +118,7 @@ class ModelProvider(ABC):
 
     @abstractmethod
     def _initialize(self):
-        """Initialize provider-specific resources."""
+        # Initialize provider-specific resources.
         pass
 
     @abstractmethod
@@ -207,9 +207,9 @@ class ModelProvider(ABC):
         pass
 
     def __enter__(self):
-        """Context manager entry."""
+        # Context manager entry.
         return self
 
     def __exit__(self, exc_type, exc_val, exc_tb):
-        """Context manager exit with cleanup."""
+        # Context manager exit with cleanup.
         self.cleanup()

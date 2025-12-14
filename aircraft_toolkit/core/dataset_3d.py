@@ -1,4 +1,4 @@
-"""3D Aircraft Dataset Generation with Multi-View Rendering"""
+# 3D Aircraft Dataset Generation with Multi-View Rendering
 
 import json
 import logging
@@ -19,7 +19,7 @@ logger = logging.getLogger(__name__)
 
 
 class Camera:
-    """3D camera for multi-view rendering"""
+    # 3D camera for multi-view rendering
 
     def __init__(
         self, position: np.ndarray, target: np.ndarray, up: np.ndarray = np.array([0, 1, 0])
@@ -30,7 +30,7 @@ class Camera:
         self.view_matrix = self._compute_view_matrix()
 
     def _compute_view_matrix(self) -> np.ndarray:
-        """Compute view matrix for camera (right-handed coordinate system)"""
+        # Compute view matrix for camera (right-handed coordinate system)
         # Forward vector (from camera to target)
         forward = self.target - self.position
         forward = forward / np.linalg.norm(forward)
@@ -64,7 +64,7 @@ class Camera:
 
 
 class Dataset3D:
-    """Generate 3D multi-view aircraft datasets with proper rendering"""
+    # Generate 3D multi-view aircraft datasets with proper rendering
 
     def __init__(
         self,
@@ -197,7 +197,7 @@ class Dataset3D:
         raise RuntimeError(f"No provider available that supports any of: {self.aircraft_types}")
 
     def _load_aircraft_models(self) -> dict:
-        """Load 3D aircraft model definitions using provider system"""
+        # Load 3D aircraft model definitions using provider system
         models = {}
 
         # Validate aircraft types with provider
@@ -289,7 +289,7 @@ class Dataset3D:
         }
 
     def _generate_split(self, split_name: str, num_scenes: int, output_dir: str) -> list[dict]:
-        """Generate scenes for a specific split"""
+        # Generate scenes for a specific split
         annotations = []
 
         for scene_idx in tqdm(range(num_scenes), desc=f"Generating {split_name}"):
@@ -359,7 +359,7 @@ class Dataset3D:
         return annotations
 
     def _generate_random_aircraft_pose(self) -> dict:
-        """Generate random 6DOF aircraft pose"""
+        # Generate random 6DOF aircraft pose
         return {
             "position": [0.0, 0.0, 0.0],  # Aircraft at origin
             "rotation": {
@@ -370,7 +370,7 @@ class Dataset3D:
         }
 
     def _generate_camera_positions(self) -> list[Camera]:
-        """Generate camera positions around the aircraft"""
+        # Generate camera positions around the aircraft
         cameras = []
 
         for i in range(self.views_per_scene):
@@ -395,7 +395,7 @@ class Dataset3D:
     def _render_view(
         self, aircraft_mesh, aircraft_pose: dict, camera: Camera
     ) -> tuple[Image.Image, Optional[Image.Image]]:
-        """Render aircraft from camera viewpoint"""
+        # Render aircraft from camera viewpoint
         # Check if provider has its own rendering method (e.g., headless provider)
         if hasattr(self.model_provider, "render_view"):
             # Use provider's render method
@@ -419,7 +419,7 @@ class Dataset3D:
     def _render_view_pyvista(
         self, aircraft_mesh, aircraft_pose: dict, camera: Camera
     ) -> tuple[Image.Image, Optional[Image.Image]]:
-        """Render using PyVista with aggressive memory management to prevent GPU leaks"""
+        # Render using PyVista with aggressive memory management to prevent GPU leaks
         import gc
         import os
 
@@ -584,7 +584,7 @@ class Dataset3D:
     def _render_view_basic(
         self, aircraft_mesh, aircraft_pose: dict, camera: Camera
     ) -> tuple[Image.Image, Optional[Image.Image]]:
-        """Basic wireframe rendering fallback"""
+        # Basic wireframe rendering fallback
         # Create rendered image
         image = Image.new("RGB", self.image_size, color=(135, 206, 235))  # Sky blue
         draw = ImageDraw.Draw(image)
@@ -610,7 +610,7 @@ class Dataset3D:
     def _transform_vertices(
         self, vertices: np.ndarray, aircraft_pose: dict, camera: Camera
     ) -> np.ndarray:
-        """Transform aircraft vertices to camera coordinate system"""
+        # Transform aircraft vertices to camera coordinate system
         # Apply aircraft rotation
         rotation = aircraft_pose["rotation"]
 
@@ -655,7 +655,7 @@ class Dataset3D:
         return camera_vertices[:, :3]  # Return 3D coordinates
 
     def _project_to_screen(self, vertices_3d: np.ndarray) -> list[tuple[int, int]]:
-        """Project 3D vertices to 2D screen coordinates"""
+        # Project 3D vertices to 2D screen coordinates
         projected = []
 
         # Simple perspective projection
@@ -684,7 +684,7 @@ class Dataset3D:
         projected_points: list[tuple[int, int]],
         vertices_3d: np.ndarray,
     ):
-        """Render aircraft faces as polygons with depth-based shading"""
+        # Render aircraft faces as polygons with depth-based shading
         # Sort faces by depth for proper rendering
         face_depths = []
         for face in faces:
@@ -727,7 +727,7 @@ class Dataset3D:
                             pass
 
     def _generate_depth_map(self, vertices_3d: np.ndarray, faces: list) -> Image.Image:
-        """Generate depth map for the rendered view"""
+        # Generate depth map for the rendered view
         # Create depth image (simplified)
         depth_array = np.full(self.image_size[::-1], 255, dtype=np.uint8)  # Far = white
 
@@ -1094,7 +1094,7 @@ class Dataset3D:
             return image
 
     def _save_annotations(self, annotations: list[dict], output_dir: str, split_name: str):
-        """Save annotations in JSON format"""
+        # Save annotations in JSON format
         output_file = os.path.join(output_dir, f"{split_name}_3d_annotations.json")
         with open(output_file, "w") as f:
             json.dump(annotations, f, indent=2)

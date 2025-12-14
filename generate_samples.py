@@ -12,7 +12,7 @@ from aircraft_toolkit.core.dataset_3d import Dataset3D
 
 
 def generate_2d_samples_by_type():
-    """Generate 2D sample images - 10 per aircraft type"""
+    # Generate 2D sample images - 10 per aircraft type
     print("🛩️  Generating 2D samples by aircraft type...")
 
     aircraft_types = ["F15", "B52", "C130"]
@@ -50,7 +50,7 @@ def generate_2d_samples_by_type():
 
 
 def generate_3d_samples_by_type():
-    """Generate 3D sample images - 10 per aircraft type"""
+    # Generate 3D sample images - 10 per aircraft type
     print("🛩️  Generating 3D samples by aircraft type...")
 
     aircraft_types = ["F15", "B52", "C130"]

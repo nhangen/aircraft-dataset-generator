@@ -20,7 +20,7 @@ class BasicProvider(ModelProvider):
     """
 
     def _initialize(self):
-        """Initialize the basic provider."""
+        # Initialize the basic provider.
         self.aircraft_definitions = {
             "F15": self._create_f15,
             "B52": self._create_b52,
@@ -28,7 +28,7 @@ class BasicProvider(ModelProvider):
         }
 
     def get_supported_aircraft(self) -> list[str]:
-        """Get list of supported aircraft types."""
+        # Get list of supported aircraft types.
         return list(self.aircraft_definitions.keys())
 
     def create_aircraft(
@@ -68,7 +68,7 @@ class BasicProvider(ModelProvider):
         return mesh
 
     def _create_f15(self) -> tuple:
-        """Create simple F-15 fighter mesh."""
+        # Create simple F-15 fighter mesh.
         vertices = np.array(
             [
                 # Main fuselage
@@ -124,7 +124,7 @@ class BasicProvider(ModelProvider):
         return vertices, faces
 
     def _create_b52(self) -> tuple:
-        """Create simple B-52 bomber mesh."""
+        # Create simple B-52 bomber mesh.
         vertices = np.array(
             [
                 # Main fuselage
@@ -179,7 +179,7 @@ class BasicProvider(ModelProvider):
         return vertices, faces
 
     def _create_c130(self) -> tuple:
-        """Create simple C-130 transport mesh."""
+        # Create simple C-130 transport mesh.
         vertices = np.array(
             [
                 # Main fuselage
@@ -241,7 +241,7 @@ class BasicProvider(ModelProvider):
         return vertices, faces
 
     def _get_capabilities(self) -> dict:
-        """Get basic provider capabilities."""
+        # Get basic provider capabilities.
         return {
             "parametric": False,
             "texture_support": False,

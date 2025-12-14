@@ -1,4 +1,4 @@
-"""Unit tests for 2D dataset generation"""
+# Unit tests for 2D dataset generation
 
 import json
 import os
@@ -12,10 +12,10 @@ from aircraft_toolkit.core.dataset_2d import Dataset2D
 
 
 class TestDataset2D(unittest.TestCase):
-    """Test 2D dataset generation functionality"""
+    # Test 2D dataset generation functionality
 
     def setUp(self):
-        """Set up test fixtures"""
+        # Set up test fixtures
         self.temp_dir = tempfile.mkdtemp()
         self.dataset = Dataset2D(
             aircraft_types=["F15", "B52"],
@@ -24,11 +24,11 @@ class TestDataset2D(unittest.TestCase):
         )
 
     def tearDown(self):
-        """Clean up test fixtures"""
+        # Clean up test fixtures
         shutil.rmtree(self.temp_dir)
 
     def test_dataset_initialization(self):
-        """Test dataset can be initialized with valid parameters"""
+        # Test dataset can be initialized with valid parameters
         self.assertEqual(self.dataset.aircraft_types, ["F15", "B52"])
         self.assertEqual(self.dataset.num_samples, 10)
         self.assertEqual(self.dataset.image_size, (64, 64))
@@ -36,12 +36,12 @@ class TestDataset2D(unittest.TestCase):
         self.assertIn("B52", self.dataset.aircraft_models)
 
     def test_invalid_aircraft_type(self):
-        """Test that invalid aircraft types raise errors"""
+        # Test that invalid aircraft types raise errors
         with self.assertRaises(ValueError):
             Dataset2D(aircraft_types=["INVALID_AIRCRAFT"], num_samples=1)
 
     def test_pose_generation(self):
-        """Test random pose generation"""
+        # Test random pose generation
         pose = self.dataset._generate_random_pose()
 
         # Check that all required pose components are present
@@ -57,7 +57,7 @@ class TestDataset2D(unittest.TestCase):
         self.assertLessEqual(pose["yaw"], 180)
 
     def test_point_scaling(self):
-        """Test scaling of aircraft points to image coordinates"""
+        # Test scaling of aircraft points to image coordinates
         points = [(0.0, 0.0), (0.5, 0.5), (-0.5, -0.5)]
         scaled = self.dataset._scale_points_to_image(points)
 
@@ -73,7 +73,7 @@ class TestDataset2D(unittest.TestCase):
             self.assertLessEqual(y, self.dataset.image_size[1])
 
     def test_aircraft_rendering(self):
-        """Test aircraft rendering produces valid images"""
+        # Test aircraft rendering produces valid images
         aircraft_model = self.dataset.aircraft_models["F15"]
         pose = self.dataset._generate_random_pose()
 
@@ -92,7 +92,7 @@ class TestDataset2D(unittest.TestCase):
             self.assertIn("height", bbox_data)
 
     def test_small_dataset_generation(self):
-        """Test generation of a small complete dataset"""
+        # Test generation of a small complete dataset
         # Generate very small dataset for testing
         small_dataset = Dataset2D(aircraft_types=["F15"], num_samples=3, image_size=(32, 32))
 
@@ -117,7 +117,7 @@ class TestDataset2D(unittest.TestCase):
         self.assertTrue(os.path.exists(os.path.join(self.temp_dir, "val_annotations.json")))
 
     def test_annotation_format_custom(self):
-        """Test custom annotation format generation"""
+        # Test custom annotation format generation
         small_dataset = Dataset2D(aircraft_types=["F15"], num_samples=2, image_size=(32, 32))
 
         results = small_dataset.generate(
@@ -159,7 +159,7 @@ class TestDataset2D(unittest.TestCase):
             self.assertEqual(len(aircraft_pose["position"]), 3)
 
     def test_annotation_format_coco(self):
-        """Test COCO annotation format generation"""
+        # Test COCO annotation format generation
         small_dataset = Dataset2D(aircraft_types=["F15"], num_samples=2, image_size=(32, 32))
 
         results = small_dataset.generate(
@@ -180,7 +180,7 @@ class TestDataset2D(unittest.TestCase):
         self.assertEqual(len(coco_data["images"]), 2)
 
     def test_multiple_aircraft_types(self):
-        """Test dataset generation with multiple aircraft types"""
+        # Test dataset generation with multiple aircraft types
         multi_dataset = Dataset2D(
             aircraft_types=["F15", "B52", "C130"], num_samples=6, image_size=(32, 32)
         )

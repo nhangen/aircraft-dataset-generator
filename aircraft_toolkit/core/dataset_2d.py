@@ -1,4 +1,4 @@
-"""2D Aircraft Dataset Generation"""
+# 2D Aircraft Dataset Generation
 
 import json
 import os
@@ -12,7 +12,7 @@ from ..models.military import B52Bomber, C130Transport, F15Fighter
 
 
 class Dataset2D:
-    """Generate 2D aircraft silhouette datasets with pose annotations"""
+    # Generate 2D aircraft silhouette datasets with pose annotations
 
     def __init__(
         self,
@@ -69,7 +69,7 @@ class Dataset2D:
         self.aircraft_models = self._load_aircraft_models()
 
     def _load_aircraft_models(self) -> dict:
-        """Load aircraft model definitions"""
+        # Load aircraft model definitions
         models = {}
         for aircraft_type in self.aircraft_types:
             if aircraft_type.upper() == "F15":
@@ -134,7 +134,7 @@ class Dataset2D:
         }
 
     def _generate_split(self, split_name: str, num_samples: int, output_dir: str) -> list[dict]:
-        """Generate samples for a specific split"""
+        # Generate samples for a specific split
         annotations = []
 
         for i in tqdm(range(num_samples), desc=f"Generating {split_name}"):
@@ -185,7 +185,7 @@ class Dataset2D:
         return annotations
 
     def _generate_random_pose(self) -> dict:
-        """Generate random 6DOF pose within specified ranges"""
+        # Generate random 6DOF pose within specified ranges
         return {
             "pitch": np.random.uniform(*self.pose_range["pitch"]),
             "yaw": np.random.uniform(*self.pose_range["yaw"]),
@@ -196,7 +196,7 @@ class Dataset2D:
         }
 
     def _render_aircraft(self, aircraft_model, pose: dict) -> tuple[Image.Image, dict]:
-        """Render aircraft silhouette with given pose and compute bounding box"""
+        # Render aircraft silhouette with given pose and compute bounding box
         # Create image with gradient background
         image = Image.new("RGB", self.image_size, color=(135, 206, 235))  # Sky blue
         draw = ImageDraw.Draw(image)
@@ -227,7 +227,7 @@ class Dataset2D:
         return image, bbox_data
 
     def _scale_points_to_image(self, points: list[tuple[float, float]]) -> list[tuple[int, int]]:
-        """Scale normalized aircraft points to image coordinates"""
+        # Scale normalized aircraft points to image coordinates
         scaled = []
         center_x, center_y = self.image_size[0] // 2, self.image_size[1] // 2
         scale = min(self.image_size) * 0.3  # Aircraft takes 30% of image
@@ -242,7 +242,7 @@ class Dataset2D:
     def _save_annotations(
         self, annotations: list[dict], output_dir: str, split_name: str, format_type: str
     ):
-        """Save annotations in specified format"""
+        # Save annotations in specified format
         if format_type == "coco":
             self._save_coco_format(annotations, output_dir, split_name)
         elif format_type == "custom":
@@ -251,13 +251,13 @@ class Dataset2D:
             raise ValueError(f"Unsupported annotation format: {format_type}")
 
     def _save_custom_format(self, annotations: list[dict], output_dir: str, split_name: str):
-        """Save in custom JSON format (now matches 3D format)"""
+        # Save in custom JSON format (now matches 3D format)
         output_file = os.path.join(output_dir, f"{split_name}_annotations.json")
         with open(output_file, "w") as f:
             json.dump(annotations, f, indent=2)
 
     def _save_coco_format(self, annotations: list[dict], output_dir: str, split_name: str):
-        """Save in COCO format with task mode support"""
+        # Save in COCO format with task mode support
         coco_data = {
             "info": {"description": f"Aircraft Dataset - {self.task_mode} mode"},
             "categories": [

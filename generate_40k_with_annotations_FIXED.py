@@ -18,7 +18,7 @@ STATE_FILE = f"{OUTPUT_DIR}_generation_state.json"
 
 
 def load_state():
-    """Load generation state from file."""
+    # Load generation state from file.
     if os.path.exists(STATE_FILE):
         with open(STATE_FILE) as f:
             return json.load(f)
@@ -35,13 +35,13 @@ def load_state():
 
 
 def save_state(state):
-    """Save generation state to file."""
+    # Save generation state to file.
     with open(STATE_FILE, "w") as f:
         json.dump(state, f, indent=2)
 
 
 def create_single_batch_script():
-    """Create the FIXED single batch generation script."""
+    # Create the FIXED single batch generation script.
     script_content = f'''#!/usr/bin/env python3
 """
 FIXED single batch generation - properly handles annotation files.
@@ -209,7 +209,7 @@ if __name__ == "__main__":
 
 
 def run_batch():
-    """Run a single batch generation."""
+    # Run a single batch generation.
     try:
         result = subprocess.run(
             ["python", "generate_single_batch_FIXED.py"],
@@ -225,7 +225,7 @@ def run_batch():
 
 
 def merge_annotations():
-    """Merge all batch annotation files into final COCO-style files."""
+    # Merge all batch annotation files into final COCO-style files.
     print("🔗 Merging annotations...")
 
     for split in ["train", "val", "test"]:

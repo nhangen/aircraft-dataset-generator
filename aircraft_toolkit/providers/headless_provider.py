@@ -10,25 +10,25 @@ from .base import AircraftMesh, ModelProvider
 
 
 class HeadlessProvider(ModelProvider):
-    """Pure computational 3D provider for headless environments."""
+    # Pure computational 3D provider for headless environments.
 
     def __init__(self, config=None):
-        """Initialize headless provider."""
+        # Initialize headless provider.
         super().__init__(config)
         self.name = "headless"
 
     def _initialize(self):
-        """Initialize provider-specific resources."""
+        # Initialize provider-specific resources.
         pass
 
     def get_supported_aircraft(self) -> list[str]:
-        """Return list of supported aircraft types."""
+        # Return list of supported aircraft types.
         return ["F15", "B52", "C130"]
 
     def create_aircraft(
         self, aircraft_type: str, detail_level: str = "medium", **kwargs
     ) -> AircraftMesh:
-        """Create aircraft mesh for headless rendering."""
+        # Create aircraft mesh for headless rendering.
         aircraft_type = aircraft_type.upper()
 
         if aircraft_type == "F15":
@@ -40,7 +40,7 @@ class HeadlessProvider(ModelProvider):
         raise ValueError(f"Unsupported aircraft type: {aircraft_type}")
 
     def _create_f15_mesh(self) -> AircraftMesh:
-        """Create F-15 mesh optimized for headless rendering."""
+        # Create F-15 mesh optimized for headless rendering.
         # F-15 Eagle - Twin-engine fighter
         vertices = np.array(
             [
@@ -93,7 +93,7 @@ class HeadlessProvider(ModelProvider):
         )
 
     def _create_b52_mesh(self) -> AircraftMesh:
-        """Create B-52 mesh optimized for headless rendering."""
+        # Create B-52 mesh optimized for headless rendering.
         # B-52 Stratofortress - Strategic bomber with long wings
         vertices = np.array(
             [
@@ -149,7 +149,7 @@ class HeadlessProvider(ModelProvider):
         )
 
     def _create_c130_mesh(self) -> AircraftMesh:
-        """Create C-130 mesh optimized for headless rendering."""
+        # Create C-130 mesh optimized for headless rendering.
         # C-130 Hercules - Transport aircraft with high wings
         vertices = np.array(
             [
@@ -212,7 +212,7 @@ class HeadlessProvider(ModelProvider):
         )
 
     def render_view(self, mesh: AircraftMesh, **kwargs) -> Image.Image:
-        """Render view using pure Python rasterization."""
+        # Render view using pure Python rasterization.
         image_size = kwargs.get("image_size", (512, 512))
         aircraft_pose = kwargs.get("aircraft_pose", {})
         camera = kwargs.get("camera")
@@ -249,7 +249,7 @@ class HeadlessProvider(ModelProvider):
         return image
 
     def _apply_transformations(self, vertices, aircraft_pose, camera):
-        """Apply aircraft pose and camera transformations."""
+        # Apply aircraft pose and camera transformations.
         import math
 
         # Apply aircraft pose transformation

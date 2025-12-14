@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Test runner for aircraft dataset generator."""
+# Test runner for aircraft dataset generator.
 import subprocess
 import sys
 

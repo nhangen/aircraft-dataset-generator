@@ -17,13 +17,13 @@ from aircraft_toolkit import Dataset2D, Dataset3D
 
 
 class DatasetGenerator:
-    """Main class for generating aircraft datasets."""
+    # Main class for generating aircraft datasets.
 
     def __init__(self):
         self.aircraft_types = ["F15", "B52", "C130"]
 
     def test_dataset(self, output_dir="output/test", include_obb=False):
-        """Generate a small test dataset for validation."""
+        # Generate a small test dataset for validation.
         print("\n🧪 Generating Test Dataset")
         print("=" * 50)
 
@@ -42,7 +42,7 @@ class DatasetGenerator:
     def production_3d_dataset(
         self, output_dir="output/production_3d", num_scenes=50, views_per_scene=8, include_obb=False
     ):
-        """Generate production-quality 3D multi-view dataset."""
+        # Generate production-quality 3D multi-view dataset.
         print("\n🚀 Generating Production 3D Dataset")
         print("=" * 50)
 
@@ -67,7 +67,7 @@ class DatasetGenerator:
     def silhouette_2d_dataset(
         self, output_dir="output/silhouettes_2d", num_samples=300, format="coco"
     ):
-        """Generate 2D silhouette dataset."""
+        # Generate 2D silhouette dataset.
         print("\n✈️ Generating 2D Silhouette Dataset")
         print("=" * 50)
 
@@ -83,7 +83,7 @@ class DatasetGenerator:
         return results
 
     def comparison_dataset(self, output_dir="output/comparison"):
-        """Generate datasets for quality comparison."""
+        # Generate datasets for quality comparison.
         print("\n📊 Generating Comparison Dataset")
         print("=" * 50)
 
@@ -100,7 +100,7 @@ class DatasetGenerator:
 
 
 def main():
-    """Main entry point."""
+    # Main entry point.
     parser = argparse.ArgumentParser(
         description="Generate aircraft datasets with real 3D models",
         formatter_class=argparse.RawDescriptionHelpFormatter,

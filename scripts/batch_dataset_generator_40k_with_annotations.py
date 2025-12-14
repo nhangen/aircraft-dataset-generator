@@ -18,7 +18,7 @@ STATE_FILE = f"{OUTPUT_DIR}_generation_state.json"
 
 
 def load_state():
-    """Load generation state from file."""
+    # Load generation state from file.
     if os.path.exists(STATE_FILE):
         with open(STATE_FILE) as f:
             return json.load(f)
@@ -35,13 +35,13 @@ def load_state():
 
 
 def save_state(state):
-    """Save generation state to file."""
+    # Save generation state to file.
     with open(STATE_FILE, "w") as f:
         json.dump(state, f, indent=2)
 
 
 def create_single_batch_script():
-    """Create the single batch generation script."""
+    # Create the single batch generation script.
     script_content = f'''#!/usr/bin/env python3
 """
 Single batch generation for aircraft_3d_pyvista_obb_40k dataset.
@@ -61,7 +61,7 @@ OUTPUT_DIR = "{OUTPUT_DIR}"
 STATE_FILE = "{STATE_FILE}"
 
 def load_state():
-    """Load generation state from file."""
+    # Load generation state from file.
     if os.path.exists(STATE_FILE):
         with open(STATE_FILE, 'r') as f:
             return json.load(f)
@@ -77,7 +77,7 @@ def load_state():
     }}
 
 def save_state(state):
-    """Save generation state to file."""
+    # Save generation state to file.
     with open(STATE_FILE, 'w') as f:
         json.dump(state, f, indent=2)
 
@@ -258,7 +258,7 @@ if __name__ == "__main__":
 
 
 def run_batch():
-    """Run a single batch generation."""
+    # Run a single batch generation.
     try:
         result = subprocess.run(
             ["python", "generate_single_batch_obb.py"], capture_output=True, text=True, timeout=600
@@ -273,7 +273,7 @@ def run_batch():
 
 
 def merge_annotations():
-    """Merge all batch annotation files into final COCO-style files."""
+    # Merge all batch annotation files into final COCO-style files.
     print("\n🔗 Merging annotations...")
 
     for split in ["train", "val", "test"]:

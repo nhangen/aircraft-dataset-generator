@@ -17,7 +17,7 @@ logger = logging.getLogger(__name__)
 
 @dataclass
 class ProviderConfig:
-    """Configuration for a model provider."""
+    # Configuration for a model provider.
 
     name: str
     enabled: bool = True
@@ -32,7 +32,7 @@ class ProviderConfig:
 
 @dataclass
 class DatasetConfig:
-    """Configuration for dataset generation."""
+    # Configuration for dataset generation.
 
     output_format: str = "custom_3d"
     image_size: tuple = (512, 512)
@@ -46,7 +46,7 @@ class DatasetConfig:
 
 @dataclass
 class AircraftConfig:
-    """Configuration for aircraft generation."""
+    # Configuration for aircraft generation.
 
     model_provider: str = "auto"  # 'auto', 'basic', 'tigl', etc.
     detail_level: str = "medium"
@@ -57,7 +57,7 @@ class AircraftConfig:
 
 @dataclass
 class Config:
-    """Main configuration class."""
+    # Main configuration class.
 
     providers: dict[str, ProviderConfig] = None
     dataset: DatasetConfig = None
@@ -72,7 +72,7 @@ class Config:
             self.aircraft = AircraftConfig()
 
     def _get_default_providers(self) -> dict[str, ProviderConfig]:
-        """Get default provider configurations."""
+        # Get default provider configurations.
         providers = {
             "basic": ProviderConfig(name="basic", enabled=True, priority=1, detail_level="low")
         }
@@ -121,12 +121,12 @@ class Config:
         return enabled_providers[0][0]
 
     def to_dict(self) -> dict[str, Any]:
-        """Convert config to dictionary."""
+        # Convert config to dictionary.
         return asdict(self)
 
     @classmethod
     def from_dict(cls, data: dict[str, Any]) -> "Config":
-        """Create config from dictionary."""
+        # Create config from dictionary.
         providers = {}
         if "providers" in data:
             for name, provider_data in data["providers"].items():
@@ -144,7 +144,7 @@ class Config:
 
 
 class ConfigManager:
-    """Manages configuration loading and saving."""
+    # Manages configuration loading and saving.
 
     def __init__(self, config_file: Optional[str] = None):
         """
@@ -157,7 +157,7 @@ class ConfigManager:
         self._config = None
 
     def _get_default_config_file(self) -> str:
-        """Get default configuration file path."""
+        # Get default configuration file path.
         # Try user config directory first
         config_dir = Path.home() / ".aircraft_toolkit"
         config_dir.mkdir(exist_ok=True)
@@ -206,7 +206,7 @@ class ConfigManager:
             logger.error(f"Failed to save config: {e}")
 
     def get_config(self) -> Config:
-        """Get current configuration."""
+        # Get current configuration.
         return self.load_config()
 
     def update_provider_config(self, provider_name: str, config: dict[str, Any]):
@@ -237,7 +237,7 @@ _config_manager = None
 
 
 def get_config_manager() -> ConfigManager:
-    """Get global configuration manager instance."""
+    # Get global configuration manager instance.
     global _config_manager
     if _config_manager is None:
         _config_manager = ConfigManager()
@@ -245,5 +245,5 @@ def get_config_manager() -> ConfigManager:
 
 
 def get_config() -> Config:
-    """Get current global configuration."""
+    # Get current global configuration.
     return get_config_manager().get_config()

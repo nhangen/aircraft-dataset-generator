@@ -25,15 +25,15 @@ logger = logging.getLogger(__name__)
 
 
 class PyVistaModelsProvider(ModelProvider):
-    """Provider using real 3D models with PyVista."""
+    # Provider using real 3D models with PyVista.
 
     def __init__(self, config=None):
-        """Initialize PyVista models provider."""
+        # Initialize PyVista models provider.
         super().__init__(config)
         self.models_cache = {}
 
     def _initialize(self):
-        """Initialize provider-specific resources."""
+        # Initialize provider-specific resources.
         if not PYVISTA_AVAILABLE:
             raise ImportError("PyVista is not available. Install with: pip install pyvista")
 
@@ -50,7 +50,7 @@ class PyVistaModelsProvider(ModelProvider):
         os.makedirs(self.models_dir, exist_ok=True)
 
     def get_supported_aircraft(self) -> list[str]:
-        """Get list of supported aircraft types."""
+        # Get list of supported aircraft types.
         aircraft = []
 
         # Built-in models (we'll use the airplane for all types with variations)
@@ -70,7 +70,7 @@ class PyVistaModelsProvider(ModelProvider):
         return aircraft
 
     def is_available(self) -> bool:
-        """Check if PyVista is available."""
+        # Check if PyVista is available.
         return PYVISTA_AVAILABLE
 
     def create_aircraft(
@@ -102,7 +102,7 @@ class PyVistaModelsProvider(ModelProvider):
         return self._pyvista_to_aircraft_mesh(mesh, aircraft_type)
 
     def _load_aircraft_model(self, aircraft_type: str):
-        """Load aircraft model from file or use built-in."""
+        # Load aircraft model from file or use built-in.
         # First try to load custom model file
         custom_model = self._try_load_custom_model(aircraft_type)
         if custom_model is not None:
@@ -115,7 +115,7 @@ class PyVistaModelsProvider(ModelProvider):
         raise ValueError(f"No model available for aircraft type: {aircraft_type}")
 
     def _try_load_custom_model(self, aircraft_type: str):
-        """Try to load a custom model file."""
+        # Try to load a custom model file.
         models_path = Path(self.models_dir)
 
         # Check for model files with this name (priority order for performance)
@@ -143,7 +143,7 @@ class PyVistaModelsProvider(ModelProvider):
         return None
 
     def _create_builtin_variant(self, aircraft_type: str):
-        """Create a variant of the built-in airplane model."""
+        # Create a variant of the built-in airplane model.
         # Load the built-in airplane
         airplane = examples.load_airplane()
 
@@ -163,7 +163,7 @@ class PyVistaModelsProvider(ModelProvider):
         return airplane
 
     def _apply_aircraft_specific_transforms(self, mesh, aircraft_type: str):
-        """Apply any specific transformations for the aircraft type."""
+        # Apply any specific transformations for the aircraft type.
         # Rotate to standard orientation (nose pointing in +X direction)
         # PyVista's airplane is oriented differently, so we need to rotate it
 
@@ -184,7 +184,7 @@ class PyVistaModelsProvider(ModelProvider):
         return mesh
 
     def _pyvista_to_aircraft_mesh(self, pv_mesh, aircraft_type: str) -> AircraftMesh:
-        """Convert PyVista mesh to AircraftMesh format."""
+        # Convert PyVista mesh to AircraftMesh format.
         # Get vertices and faces
         vertices = np.array(pv_mesh.points)
 
@@ -243,7 +243,7 @@ class PyVistaModelsProvider(ModelProvider):
         )
 
     def download_sample_models(self):
-        """Download sample aircraft models from online sources."""
+        # Download sample aircraft models from online sources.
         logger.info("Downloading sample aircraft models...")
 
         # This would download actual aircraft models from repositories

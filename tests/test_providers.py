@@ -17,10 +17,10 @@ from aircraft_toolkit.providers.registry import ProviderRegistry, get_provider
 
 
 class TestAircraftMesh:
-    """Test AircraftMesh data structure."""
+    # Test AircraftMesh data structure.
 
     def test_valid_mesh_creation(self):
-        """Test creating a valid mesh."""
+        # Test creating a valid mesh.
         vertices = np.array([[0, 0, 0], [1, 0, 0], [0, 1, 0]])
         faces = np.array([[0, 1, 2]])
 
@@ -31,7 +31,7 @@ class TestAircraftMesh:
         assert mesh.metadata == {}
 
     def test_mesh_validation(self):
-        """Test mesh validation."""
+        # Test mesh validation.
         # Invalid vertices shape
         with pytest.raises(AssertionError):
             AircraftMesh(vertices=np.array([[0, 0]]), faces=np.array([[0, 1, 2]]))
@@ -41,7 +41,7 @@ class TestAircraftMesh:
             AircraftMesh(vertices=np.array([[0, 0, 0]]), faces=np.array([[0, 1]]))
 
     def test_compute_normals(self):
-        """Test normal computation."""
+        # Test normal computation.
         vertices = np.array([[0, 0, 0], [1, 0, 0], [0, 1, 0], [0, 0, 1]])
         faces = np.array([[0, 1, 2], [0, 1, 3]])
 
@@ -52,7 +52,7 @@ class TestAircraftMesh:
         assert mesh.normals.shape == vertices.shape
 
     def test_center_and_scale(self):
-        """Test centering and scaling."""
+        # Test centering and scaling.
         vertices = np.array([[0, 0, 0], [2, 0, 0], [0, 2, 0], [0, 0, 2]])
         faces = np.array([[0, 1, 2]])
 
@@ -71,20 +71,20 @@ class TestAircraftMesh:
 
 
 class TestBasicProvider:
-    """Test BasicProvider implementation."""
+    # Test BasicProvider implementation.
 
     def setup_method(self):
-        """Set up test fixtures."""
+        # Set up test fixtures.
         self.provider = BasicProvider()
 
     def test_supported_aircraft(self):
-        """Test getting supported aircraft."""
+        # Test getting supported aircraft.
         aircraft = self.provider.get_supported_aircraft()
         expected = ["F15", "B52", "C130"]
         assert set(aircraft) == set(expected)
 
     def test_create_f15(self):
-        """Test creating F-15 model."""
+        # Test creating F-15 model.
         mesh = self.provider.create_aircraft("F15")
 
         assert isinstance(mesh, AircraftMesh)
@@ -95,26 +95,26 @@ class TestBasicProvider:
         assert mesh.normals is not None
 
     def test_create_b52(self):
-        """Test creating B-52 model."""
+        # Test creating B-52 model.
         mesh = self.provider.create_aircraft("B52")
 
         assert isinstance(mesh, AircraftMesh)
         assert mesh.metadata["aircraft_type"] == "B52"
 
     def test_create_c130(self):
-        """Test creating C-130 model."""
+        # Test creating C-130 model.
         mesh = self.provider.create_aircraft("C130")
 
         assert isinstance(mesh, AircraftMesh)
         assert mesh.metadata["aircraft_type"] == "C130"
 
     def test_invalid_aircraft_type(self):
-        """Test handling invalid aircraft type."""
+        # Test handling invalid aircraft type.
         with pytest.raises(ValueError, match="Aircraft type 'INVALID' not supported"):
             self.provider.create_aircraft("INVALID")
 
     def test_provider_info(self):
-        """Test getting provider information."""
+        # Test getting provider information.
         info = self.provider.get_provider_info()
 
         assert info["name"] == "BasicProvider"
@@ -122,22 +122,22 @@ class TestBasicProvider:
         assert info["capabilities"]["external_dependencies"] is False
 
     def test_context_manager(self):
-        """Test provider as context manager."""
+        # Test provider as context manager.
         with BasicProvider() as provider:
             mesh = provider.create_aircraft("F15")
             assert mesh is not None
 
 
 class TestProviderRegistry:
-    """Test provider registry functionality."""
+    # Test provider registry functionality.
 
     def setup_method(self):
-        """Set up test fixtures."""
+        # Set up test fixtures.
         # Create a fresh registry for testing
         ProviderRegistry._providers = {}
 
     def test_register_provider(self):
-        """Test registering a provider."""
+        # Test registering a provider.
         ProviderRegistry.register("test", BasicProvider)
 
         providers = ProviderRegistry.list_providers()
@@ -145,7 +145,7 @@ class TestProviderRegistry:
         assert providers["test"] == BasicProvider
 
     def test_get_provider(self):
-        """Test getting a provider."""
+        # Test getting a provider.
         ProviderRegistry.register("test", BasicProvider)
         ProviderRegistry.set_default("test")
 
@@ -153,7 +153,7 @@ class TestProviderRegistry:
         assert isinstance(provider, BasicProvider)
 
     def test_get_default_provider(self):
-        """Test getting default provider."""
+        # Test getting default provider.
         ProviderRegistry.register("test", BasicProvider)
         ProviderRegistry.set_default("test")
 
@@ -161,7 +161,7 @@ class TestProviderRegistry:
         assert isinstance(provider, BasicProvider)
 
     def test_invalid_provider_class(self):
-        """Test registering invalid provider class."""
+        # Test registering invalid provider class.
 
         class InvalidProvider:
             pass
@@ -170,21 +170,21 @@ class TestProviderRegistry:
             ProviderRegistry.register("invalid", InvalidProvider)
 
     def test_unknown_provider(self):
-        """Test getting unknown provider."""
+        # Test getting unknown provider.
         with pytest.raises(ValueError, match="Provider 'unknown' not found"):
             ProviderRegistry.get("unknown")
 
     def test_set_invalid_default(self):
-        """Test setting invalid default provider."""
+        # Test setting invalid default provider.
         with pytest.raises(ValueError, match="provider 'unknown' not found"):
             ProviderRegistry.set_default("unknown")
 
 
 class TestTiGLProvider:
-    """Test TiGL provider (if available)."""
+    # Test TiGL provider (if available).
 
     def setup_method(self):
-        """Set up test fixtures."""
+        # Set up test fixtures.
         try:
             from aircraft_toolkit.providers.tigl_provider import TiGLProvider
 
@@ -195,7 +195,7 @@ class TestTiGLProvider:
             self.tigl_available = False
 
     def test_tigl_initialization(self):
-        """Test TiGL provider initialization."""
+        # Test TiGL provider initialization.
         if not self.tigl_available:
             pytest.skip("TiGL not available")
 
@@ -203,7 +203,7 @@ class TestTiGLProvider:
         assert len(self.provider.cpacs_templates) > 0
 
     def test_tigl_supported_aircraft(self):
-        """Test TiGL supported aircraft."""
+        # Test TiGL supported aircraft.
         if not self.tigl_available:
             pytest.skip("TiGL provider not available")
 
@@ -211,13 +211,13 @@ class TestTiGLProvider:
         assert len(aircraft) > 0
 
     def test_tigl_create_aircraft_without_tigl(self):
-        """Test TiGL provider without TiGL installed."""
+        # Test TiGL provider without TiGL installed.
         if not self.tigl_available:
             pytest.skip("TiGL provider not available")
 
     @pytest.mark.integration
     def test_tigl_create_aircraft_with_tigl(self):
-        """Test TiGL aircraft creation (integration test)."""
+        # Test TiGL aircraft creation (integration test).
         if not self.tigl_available:
             pytest.skip("TiGL not available")
 
@@ -233,7 +233,7 @@ class TestTiGLProvider:
             pytest.skip(f"TiGL integration test failed: {e}")
 
     def test_tigl_cleanup(self):
-        """Test TiGL cleanup."""
+        # Test TiGL cleanup.
         if self.tigl_available:
             temp_dir = self.provider.temp_dir
             assert Path(temp_dir).exists()
@@ -243,10 +243,10 @@ class TestTiGLProvider:
 
 
 class TestConfiguration:
-    """Test configuration system."""
+    # Test configuration system.
 
     def setup_method(self):
-        """Set up test fixtures."""
+        # Set up test fixtures.
         self.temp_dir = tempfile.mkdtemp()
         self.config_file = Path(self.temp_dir) / "test_config.json"
 
@@ -258,11 +258,11 @@ class TestConfiguration:
             ProviderRegistry.register("basic", BasicProvider)
 
     def teardown_method(self):
-        """Clean up test fixtures."""
+        # Clean up test fixtures.
         shutil.rmtree(self.temp_dir)
 
     def test_default_config(self):
-        """Test default configuration."""
+        # Test default configuration.
         config = Config()
 
         assert config.aircraft.model_provider == "auto"
@@ -272,7 +272,7 @@ class TestConfiguration:
         assert len(config.providers) >= 1
 
     def test_config_serialization(self):
-        """Test config to/from dict."""
+        # Test config to/from dict.
         config = Config()
         config_dict = config.to_dict()
 
@@ -282,7 +282,7 @@ class TestConfiguration:
         assert restored_config.dataset.image_size == config.dataset.image_size
 
     def test_preferred_provider_auto(self):
-        """Test automatic provider selection."""
+        # Test automatic provider selection.
         config = Config()
 
         # Should prefer higher priority provider (pyvista if available, else basic)
@@ -290,7 +290,7 @@ class TestConfiguration:
         assert preferred in ["pyvista", "basic"]  # Depends on availability
 
     def test_preferred_provider_explicit(self):
-        """Test explicit provider selection."""
+        # Test explicit provider selection.
         config = Config()
         config.aircraft.model_provider = "basic"
 
@@ -299,10 +299,10 @@ class TestConfiguration:
 
 
 class TestIntegration:
-    """Integration tests for the complete system."""
+    # Integration tests for the complete system.
 
     def test_provider_switching(self):
-        """Test switching between providers."""
+        # Test switching between providers.
         # Register both providers
         ProviderRegistry.register("basic", BasicProvider)
 
@@ -314,7 +314,7 @@ class TestIntegration:
         assert basic_mesh.num_vertices < 50  # Basic models are simple
 
     def test_error_handling(self):
-        """Test error handling throughout the system."""
+        # Test error handling throughout the system.
         provider = BasicProvider()
 
         # Invalid aircraft type
@@ -326,7 +326,7 @@ class TestIntegration:
         assert mesh is not None
 
     def test_mesh_quality_comparison(self):
-        """Test mesh quality differences between providers."""
+        # Test mesh quality differences between providers.
         basic_provider = BasicProvider()
         basic_mesh = basic_provider.create_aircraft("F15")
 
