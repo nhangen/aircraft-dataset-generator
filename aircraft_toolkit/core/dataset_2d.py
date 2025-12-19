@@ -101,9 +101,9 @@ class Dataset2D:
         Returns:
             Dict with dataset statistics and file paths
         """
-        print(f"🛩️  Generating 2D Aircraft Dataset")
+        print("🛩️  Generating 2D Aircraft Dataset")
         print(
-            f"📊 {self.num_samples} samples, {len(self.aircraft_types)} aircraft types"
+            "📊 {} samples, {} aircraft types".format(self.num_samples, len(self.aircraft_types))
         )
 
         # Create output directories

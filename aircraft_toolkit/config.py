@@ -79,8 +79,8 @@ class Config:
 
         # Add PyVista provider if available
         try:
-            import pyvista
-
+            # Import here to detect availability; not used directly in this module.
+            __import__("pyvista")
             providers["pyvista"] = ProviderConfig(
                 name="pyvista",
                 enabled=True,
@@ -88,6 +88,7 @@ class Config:
                 detail_level="high",
             )
         except ImportError:
+            # PyVista not available; leave provider out
             pass
 
         return providers

@@ -442,7 +442,7 @@ class Dataset3D:
             # Clear any existing plotters first
             try:
                 pv.close_all()
-            except:
+            except Exception:
                 pass
 
             # Create PyVista mesh from aircraft mesh
@@ -722,7 +722,7 @@ class Dataset3D:
                             draw.polygon(
                                 valid_points, fill=fill_color, outline=outline_color, width=1
                             )
-                        except:
+                        except Exception:
                             # If polygon fails, just skip this face
                             pass
 
@@ -739,10 +739,10 @@ class Dataset3D:
                 if face_depths:
                     avg_depth = np.mean(face_depths)
                     # Convert depth to grayscale (closer = darker)
-                    depth_value = max(0, min(255, int(255 - (avg_depth * 10))))
+                    _depth_value = max(0, min(255, int(255 - (avg_depth * 10))))
 
-                    # This is a simplified depth map - a real implementation would
-                    # use proper rasterization
+                # This is a simplified depth map - a real implementation would
+                # use proper rasterization
 
         return Image.fromarray(depth_array, mode="L")
 
