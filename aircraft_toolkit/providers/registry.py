@@ -23,10 +23,10 @@ class ProviderRegistry:
 
     _instance = None
     _providers: Dict[str, Type[ModelProvider]] = {}
-    _default_provider: str = 'basic'
+    _default_provider: str = "basic"
 
     def __new__(cls):
-        """Ensure singleton pattern."""
+        # Ensure singleton pattern.
         if cls._instance is None:
             cls._instance = super().__new__(cls)
         return cls._instance
@@ -55,7 +55,9 @@ class ProviderRegistry:
         logger.info(f"Registered provider: {name} ({provider_class.__name__})")
 
     @classmethod
-    def get(cls, name: Optional[str] = None, config: Optional[Dict] = None) -> ModelProvider:
+    def get(
+        cls, name: Optional[str] = None, config: Optional[Dict] = None
+    ) -> ModelProvider:
         """
         Get a provider instance.
 
@@ -73,7 +75,7 @@ class ProviderRegistry:
             name = cls._default_provider
 
         if name not in cls._providers:
-            available = ', '.join(cls._providers.keys())
+            available = ", ".join(cls._providers.keys())
             raise ValueError(
                 f"Provider '{name}' not found. Available providers: {available}"
             )
@@ -120,7 +122,9 @@ def register_provider(name: str, provider_class: Type[ModelProvider]):
     ProviderRegistry.register(name, provider_class)
 
 
-def get_provider(name: Optional[str] = None, config: Optional[Dict] = None) -> ModelProvider:
+def get_provider(
+    name: Optional[str] = None, config: Optional[Dict] = None
+) -> ModelProvider:
     """
     Get a provider from the global registry.
 
