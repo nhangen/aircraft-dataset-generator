@@ -56,7 +56,7 @@ def main():
 
     # Generate the dataset
     try:
-        results = dataset.generate(
+        _results = dataset.generate(
             output_dir=str(output_dir),
             split_ratios=(0.7, 0.2, 0.1),  # 70% train, 20% val, 10% test
             annotation_format="custom_3d",  # Custom format with OBB data
@@ -64,7 +64,7 @@ def main():
         )
 
         logger.info("Dataset generation completed successfully!")
-        logger.info(f"Results: {results}")
+        logger.info("Dataset generation finished")
 
         # Print dataset statistics
         print("\n" + "=" * 60)
@@ -75,8 +75,8 @@ def main():
         print(f"🎯 Total scenes: {dataset.num_scenes}")
         print(f"📸 Views per scene: {dataset.views_per_scene}")
         print(f"🖼️  Total images: {dataset.num_scenes * dataset.views_per_scene}")
-        print(f"📦 Oriented bounding boxes: ✅ Enabled")
-        print(f"📊 Data splits: 70% train / 20% val / 10% test")
+        print("📦 Oriented bounding boxes: ✅ Enabled")
+        print("📊 Data splits: 70% train / 20% val / 10% test")
         print("\n🎯 Purpose: Solve ViT pose estimation training failures")
         print("   Previous experiments showed ~120° rotation errors (random guessing)")
         print("   OBB annotations provide geometric anchors for learning")

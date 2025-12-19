@@ -409,8 +409,8 @@ class Dataset3D:
 
         # Check if PyVista is available for high-quality rendering
         try:
-            import pyvista as pv
-
+            # Import here to avoid PyVista at module import time
+            __import__("pyvista")
             return self._render_view_pyvista(aircraft_mesh, aircraft_pose, camera)
         except ImportError:
             # Fall back to basic rendering
@@ -551,14 +551,14 @@ class Dataset3D:
                     plotter.close()
                     # Force delete
                     del plotter
-                except:
+                except Exception:
                     pass
 
             # Clear mesh data immediately
             if pv_mesh is not None:
                 try:
                     del pv_mesh
-                except:
+                except Exception:
                     pass
 
             # Clear all PyVista objects and force context cleanup
@@ -568,7 +568,7 @@ class Dataset3D:
                 gc.collect()
                 gc.collect()
                 gc.collect()
-            except:
+            except Exception:
                 pass
 
             # Try to reset PyVista global state
@@ -578,7 +578,7 @@ class Dataset3D:
                 # Clear any cached textures or buffers if available
                 if hasattr(pv, "_clear_cache"):
                     pv._clear_cache()
-            except:
+            except Exception:
                 pass
 
     def _render_view_basic(

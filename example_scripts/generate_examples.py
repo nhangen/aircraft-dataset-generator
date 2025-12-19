@@ -13,7 +13,7 @@ from pathlib import Path
 # Add parent directory to path for imports
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from aircraft_toolkit import Dataset2D, Dataset3D
+from aircraft_toolkit import Dataset2D, Dataset3D  # noqa: E402
 
 
 class DatasetGenerator:
