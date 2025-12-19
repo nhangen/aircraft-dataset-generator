@@ -82,6 +82,9 @@ class AircraftMesh:
         Args:
             target_size: Target bounding box diagonal size
         """
+        # Ensure vertices are float for arithmetic operations
+        self.vertices = self.vertices.astype(np.float64)
+
         # Center at origin
         center = self.vertices.mean(axis=0)
         self.vertices -= center
