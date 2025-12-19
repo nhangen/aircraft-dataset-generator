@@ -99,10 +99,10 @@ class DatasetGenerator:
             f"{output_dir}/3d", num_scenes=10, views_per_scene=4
         )
 
-        print(f"\n📈 Comparison Summary:")
-        print(f"  2D Silhouettes: {results_2d['total_samples']} images")
-        print(f"  3D Multi-view: {results_3d['total_images']} images")
-        return {"2d": results_2d, "3d": results_3d}
+    print("\n📈 Comparison Summary:")
+    print("  2D Silhouettes: {} images".format(results_2d["total_samples"]))
+    print("  3D Multi-view: {} images".format(results_3d["total_images"]))
+    return {"2d": results_2d, "3d": results_3d}
 
 
 def main():

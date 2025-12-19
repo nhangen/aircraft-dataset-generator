@@ -14,7 +14,7 @@ from pathlib import Path
 # Add the toolkit to Python path
 sys.path.insert(0, str(Path(__file__).parent))
 
-from aircraft_toolkit import Dataset3D
+from aircraft_toolkit import Dataset3D  # noqa: E402
 
 # Configure logging
 logging.basicConfig(

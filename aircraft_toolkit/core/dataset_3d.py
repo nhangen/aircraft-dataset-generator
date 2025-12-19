@@ -739,7 +739,8 @@ class Dataset3D:
                 if face_depths:
                     avg_depth = np.mean(face_depths)
                     # Convert depth to grayscale (closer = darker)
-                    _depth_value = max(0, min(255, int(255 - (avg_depth * 10))))
+                    # Depth value currently unused; keep calculation for future use
+                    _ = max(0, min(255, int(255 - (avg_depth * 10))))
 
                 # This is a simplified depth map - a real implementation would
                 # use proper rasterization

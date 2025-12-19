@@ -96,17 +96,17 @@ class TestDataset2D(unittest.TestCase):
         # Generate very small dataset for testing
         small_dataset = Dataset2D(aircraft_types=["F15"], num_samples=3, image_size=(32, 32))
 
-        results = small_dataset.generate(
+        _results = small_dataset.generate(
             output_dir=self.temp_dir,
             split_ratios=(0.6, 0.4, 0.0),  # No test split
             annotation_format="custom",
         )
 
         # Check results structure
-        self.assertEqual(results["total_samples"], 3)
-        self.assertEqual(results["train_samples"], 1)  # 60% of 3 = 1
-        self.assertEqual(results["val_samples"], 1)  # 40% of 3 = 1
-        self.assertEqual(results["test_samples"], 1)  # Remainder
+        self.assertEqual(_results["total_samples"], 3)
+        self.assertEqual(_results["train_samples"], 1)  # 60% of 3 = 1
+        self.assertEqual(_results["val_samples"], 1)  # 40% of 3 = 1
+        self.assertEqual(_results["test_samples"], 1)  # Remainder
 
         # Check that directories were created
         self.assertTrue(os.path.exists(os.path.join(self.temp_dir, "train", "images")))
@@ -120,7 +120,7 @@ class TestDataset2D(unittest.TestCase):
         # Test custom annotation format generation
         small_dataset = Dataset2D(aircraft_types=["F15"], num_samples=2, image_size=(32, 32))
 
-        results = small_dataset.generate(
+        _results = small_dataset.generate(
             output_dir=self.temp_dir,
             split_ratios=(1.0, 0.0, 0.0),  # Only train split
             annotation_format="custom",
@@ -185,7 +185,7 @@ class TestDataset2D(unittest.TestCase):
             aircraft_types=["F15", "B52", "C130"], num_samples=6, image_size=(32, 32)
         )
 
-        results = multi_dataset.generate(
+        _results = multi_dataset.generate(
             output_dir=self.temp_dir, split_ratios=(1.0, 0.0, 0.0), annotation_format="custom"
         )
 
