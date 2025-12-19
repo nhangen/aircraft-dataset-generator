@@ -11,7 +11,6 @@ import tempfile
 import unittest
 
 import numpy as np
-
 from aircraft_toolkit.config import get_config
 from aircraft_toolkit.core.dataset_3d import Dataset3D
 

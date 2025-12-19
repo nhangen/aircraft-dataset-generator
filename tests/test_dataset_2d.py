@@ -6,9 +6,8 @@ import shutil
 import tempfile
 import unittest
 
-from PIL import Image
-
 from aircraft_toolkit.core.dataset_2d import Dataset2D
+from PIL import Image
 
 
 class TestDataset2D(unittest.TestCase):
