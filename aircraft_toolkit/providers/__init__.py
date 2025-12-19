@@ -31,27 +31,25 @@ from .registry import get_provider, list_providers, register_provider
 # Try to register PyVista provider
 try:
     from .pyvista_models_provider import PyVistaModelsProvider
-
-    register_provider("pyvista", PyVistaModelsProvider)
+    register_provider('pyvista', PyVistaModelsProvider)
 except ImportError:
     pass
 
 # Register default providers
-register_provider("basic", BasicProvider)
+register_provider('basic', BasicProvider)
 
 # Register headless provider for Docker environments
 try:
     from .headless_provider import HeadlessProvider
-
-    register_provider("headless", HeadlessProvider)
+    register_provider('headless', HeadlessProvider)
 except ImportError:
     pass
 
 __all__ = [
-    "ModelProvider",
-    "AircraftMesh",
-    "BasicProvider",
-    "get_provider",
-    "register_provider",
-    "list_providers",
+    'ModelProvider',
+    'AircraftMesh',
+    'BasicProvider',
+    'get_provider',
+    'register_provider',
+    'list_providers',
 ]

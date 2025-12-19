@@ -7,7 +7,7 @@ ensuring consistency and modularity across different 3D model generation backend
 
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
-from typing import Optional
+from typing import Dict, List, Optional, Tuple
 
 import numpy as np
 
@@ -23,46 +23,38 @@ class AircraftMesh:
         normals: Optional Nx3 array of vertex normals
         metadata: Additional metadata (aircraft type, dimensions, etc.)
     """
-
     vertices: np.ndarray
     faces: np.ndarray
     normals: Optional[np.ndarray] = None
-    metadata: dict = None
+    metadata: Dict = None
 
     def __post_init__(self):
-        # Validate mesh data after initialization.
+        """Validate mesh data after initialization."""
         if self.metadata is None:
             self.metadata = {}
 
-        # Ensure vertices are float type for geometric operations
-        self.vertices = np.asarray(self.vertices, dtype=np.float64)
-        self.faces = np.asarray(self.faces, dtype=np.int32)
-
         # Ensure correct shapes
-        assert (
-            self.vertices.ndim == 2 and self.vertices.shape[1] == 3
-        ), f"Vertices must be Nx3, got {self.vertices.shape}"
-        assert (
-            self.faces.ndim == 2 and self.faces.shape[1] == 3
-        ), f"Faces must be Mx3, got {self.faces.shape}"
+        assert self.vertices.ndim == 2 and self.vertices.shape[1] == 3, \
+            f"Vertices must be Nx3, got {self.vertices.shape}"
+        assert self.faces.ndim == 2 and self.faces.shape[1] == 3, \
+            f"Faces must be Mx3, got {self.faces.shape}"
 
         if self.normals is not None:
-            assert (
-                self.normals.shape == self.vertices.shape
-            ), f"Normals shape {self.normals.shape} must match vertices {self.vertices.shape}"
+            assert self.normals.shape == self.vertices.shape, \
+                f"Normals shape {self.normals.shape} must match vertices {self.vertices.shape}"
 
     @property
     def num_vertices(self) -> int:
-        # Number of vertices in the mesh.
+        """Number of vertices in the mesh."""
         return len(self.vertices)
 
     @property
     def num_faces(self) -> int:
-        # Number of faces in the mesh.
+        """Number of faces in the mesh."""
         return len(self.faces)
 
     def compute_normals(self):
-        # Compute vertex normals if not present.
+        """Compute vertex normals if not present."""
         if self.normals is not None:
             return
 
@@ -106,7 +98,7 @@ class ModelProvider(ABC):
     the required methods for generating aircraft meshes.
     """
 
-    def __init__(self, config: Optional[dict] = None):
+    def __init__(self, config: Optional[Dict] = None):
         """
         Initialize the model provider.
 
@@ -118,11 +110,11 @@ class ModelProvider(ABC):
 
     @abstractmethod
     def _initialize(self):
-        # Initialize provider-specific resources.
+        """Initialize provider-specific resources."""
         pass
 
     @abstractmethod
-    def get_supported_aircraft(self) -> list[str]:
+    def get_supported_aircraft(self) -> List[str]:
         """
         Get list of supported aircraft types.
 
@@ -132,9 +124,10 @@ class ModelProvider(ABC):
         pass
 
     @abstractmethod
-    def create_aircraft(
-        self, aircraft_type: str, detail_level: str = "medium", **kwargs
-    ) -> AircraftMesh:
+    def create_aircraft(self,
+                       aircraft_type: str,
+                       detail_level: str = 'medium',
+                       **kwargs) -> AircraftMesh:
         """
         Create an aircraft mesh.
 
@@ -169,7 +162,7 @@ class ModelProvider(ABC):
                 f"Supported types: {', '.join(supported)}"
             )
 
-    def get_provider_info(self) -> dict:
+    def get_provider_info(self) -> Dict:
         """
         Get information about this provider.
 
@@ -177,12 +170,12 @@ class ModelProvider(ABC):
             Dictionary containing provider name, version, capabilities, etc.
         """
         return {
-            "name": self.__class__.__name__,
-            "supported_aircraft": self.get_supported_aircraft(),
-            "capabilities": self._get_capabilities(),
+            'name': self.__class__.__name__,
+            'supported_aircraft': self.get_supported_aircraft(),
+            'capabilities': self._get_capabilities(),
         }
 
-    def _get_capabilities(self) -> dict:
+    def _get_capabilities(self) -> Dict:
         """
         Get provider capabilities.
 
@@ -192,10 +185,10 @@ class ModelProvider(ABC):
             Dictionary of capability flags
         """
         return {
-            "parametric": False,
-            "texture_support": False,
-            "animation_support": False,
-            "detail_levels": ["low", "medium", "high"],
+            'parametric': False,
+            'texture_support': False,
+            'animation_support': False,
+            'detail_levels': ['low', 'medium', 'high'],
         }
 
     def cleanup(self):
@@ -207,9 +200,9 @@ class ModelProvider(ABC):
         pass
 
     def __enter__(self):
-        # Context manager entry.
+        """Context manager entry."""
         return self
 
     def __exit__(self, exc_type, exc_val, exc_tb):
-        # Context manager exit with cleanup.
+        """Context manager exit with cleanup."""
         self.cleanup()

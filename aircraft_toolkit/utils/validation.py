@@ -2,19 +2,19 @@
 Validation utilities for Aircraft Dataset Generator.
 """
 
-from typing import Union
+from typing import List, Union
 
 # Supported aircraft types
-SUPPORTED_AIRCRAFT_TYPES = ["F15", "B52", "C130"]
+SUPPORTED_AIRCRAFT_TYPES = ['F15', 'B52', 'C130']
 
 # Supported output formats
-SUPPORTED_OUTPUT_FORMATS = ["coco", "yolo", "pascal_voc", "custom_3d"]
+SUPPORTED_OUTPUT_FORMATS = ['coco', 'yolo', 'pascal_voc', 'custom_3d']
 
 # Supported annotation formats
-SUPPORTED_ANNOTATION_FORMATS = ["coco", "yolo", "pascal_voc"]
+SUPPORTED_ANNOTATION_FORMATS = ['coco', 'yolo', 'pascal_voc']
 
 
-def validate_aircraft_types(aircraft_types: list[str]) -> list[str]:
+def validate_aircraft_types(aircraft_types: List[str]) -> List[str]:
     """
     Validate and normalize aircraft type names.
 
@@ -110,4 +110,6 @@ def validate_image_size(image_size: Union[tuple, int]) -> tuple:
         return (width, height)
 
     else:
-        raise ValueError("Image size must be a positive integer or (width, height) tuple")
+        raise ValueError(
+            "Image size must be a positive integer or (width, height) tuple"
+        )

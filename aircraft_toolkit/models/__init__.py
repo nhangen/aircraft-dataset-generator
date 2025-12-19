@@ -1,4 +1,4 @@
-# Aircraft model definitions
+"""Aircraft model definitions"""
 
 from .military import B52Bomber, C130Transport, F15Fighter
 

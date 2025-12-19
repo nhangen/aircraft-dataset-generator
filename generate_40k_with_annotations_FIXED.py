@@ -16,32 +16,29 @@ BATCH_SIZE = 50  # scenes per batch
 VIEWS_PER_SCENE = 8
 STATE_FILE = f"{OUTPUT_DIR}_generation_state.json"
 
-
 def load_state():
-    # Load generation state from file.
+    """Load generation state from file."""
     if os.path.exists(STATE_FILE):
-        with open(STATE_FILE) as f:
+        with open(STATE_FILE, 'r') as f:
             return json.load(f)
     return {
-        "batch_num": 0,
-        "total_generated": 0,
-        "train_scenes": 0,
-        "val_scenes": 0,
-        "test_scenes": 0,
-        "target_train": 3500,
-        "target_val": 1000,
-        "target_test": 500,
+        'batch_num': 0,
+        'total_generated': 0,
+        'train_scenes': 0,
+        'val_scenes': 0,
+        'test_scenes': 0,
+        'target_train': 3500,
+        'target_val': 1000,
+        'target_test': 500
     }
 
-
 def save_state(state):
-    # Save generation state to file.
-    with open(STATE_FILE, "w") as f:
+    """Save generation state to file."""
+    with open(STATE_FILE, 'w') as f:
         json.dump(state, f, indent=2)
 
-
 def create_single_batch_script():
-    # Create the FIXED single batch generation script.
+    """Create the FIXED single batch generation script."""
     script_content = f'''#!/usr/bin/env python3
 """
 FIXED single batch generation - properly handles annotation files.
@@ -207,28 +204,22 @@ if __name__ == "__main__":
     with open("generate_single_batch_FIXED.py", "w") as f:
         f.write(script_content)
 
-
 def run_batch():
-    # Run a single batch generation.
+    """Run a single batch generation."""
     try:
-        result = subprocess.run(
-            ["python", "generate_single_batch_FIXED.py"],
-            capture_output=True,
-            text=True,
-            timeout=600,
-        )
+        result = subprocess.run(['python', 'generate_single_batch_FIXED.py'],
+                              capture_output=True, text=True, timeout=600)
         return result.returncode == 0, result.stdout, result.stderr
     except subprocess.TimeoutExpired:
         return False, "", "Timeout"
     except Exception as e:
         return False, "", str(e)
 
-
 def merge_annotations():
-    # Merge all batch annotation files into final COCO-style files.
+    """Merge all batch annotation files into final COCO-style files."""
     print("🔗 Merging annotations...")
 
-    for split in ["train", "val", "test"]:
+    for split in ['train', 'val', 'test']:
         split_dir = f"{OUTPUT_DIR}/{split}"
         if not os.path.exists(split_dir):
             continue
@@ -239,7 +230,7 @@ def merge_annotations():
 
         for batch_file in batch_files:
             try:
-                with open(batch_file) as f:
+                with open(batch_file, 'r') as f:
                     batch_data = json.load(f)
                     all_annotations.extend(batch_data)
                 # Remove batch file after merging
@@ -250,21 +241,18 @@ def merge_annotations():
         # Save merged annotations
         if all_annotations:
             merged_file = f"{OUTPUT_DIR}/{split}_annotations.json"
-            with open(merged_file, "w") as f:
+            with open(merged_file, 'w') as f:
                 json.dump(all_annotations, f, indent=2)
             print(f"✅ Merged {len(all_annotations)} annotations for {split}")
 
-
 def main():
-    print(
-        f"""
+    print(f"""
 ╔══════════════════════════════════════════════════════════════╗
 ║                 FIXED AIRCRAFT 3D DATASET 40K               ║
 ╚══════════════════════════════════════════════════════════════╝
 Dataset: {OUTPUT_DIR}
 Fixed: Proper annotation handling guaranteed
-"""
-    )
+""")
 
     create_single_batch_script()
 
@@ -274,8 +262,8 @@ Fixed: Proper annotation handling guaranteed
 
     while True:
         state = load_state()
-        total_target_scenes = state["target_train"] + state["target_val"] + state["target_test"]
-        current_scenes = state["train_scenes"] + state["val_scenes"] + state["test_scenes"]
+        total_target_scenes = state['target_train'] + state['target_val'] + state['target_test']
+        current_scenes = state['train_scenes'] + state['val_scenes'] + state['test_scenes']
 
         if current_scenes >= total_target_scenes:
             print("🎉 GENERATION COMPLETE!")
@@ -285,9 +273,7 @@ Fixed: Proper annotation handling guaranteed
         elapsed = time.time() - start_time
         progress_pct = (current_scenes / total_target_scenes) * 100
 
-        print(
-            f"\\nBatch #{batch_count}: {current_scenes}/{total_target_scenes} scenes ({progress_pct:.1f}%)"
-        )
+        print(f"\\nBatch #{batch_count}: {current_scenes}/{total_target_scenes} scenes ({progress_pct:.1f}%)")
 
         success, stdout, stderr = run_batch()
 
@@ -310,8 +296,7 @@ Fixed: Proper annotation handling guaranteed
     final_state = load_state()
     final_time = (time.time() - start_time) / 60
 
-    print(
-        f"""
+    print(f"""
 ╔══════════════════════════════════════════════════════════════╗
 ║                     GENERATION SUMMARY                      ║
 ╚══════════════════════════════════════════════════════════════╝
@@ -322,13 +307,11 @@ Fixed: Proper annotation handling guaranteed
 ⏱️  Time: {final_time:.1f} minutes
 📁 Output: {OUTPUT_DIR}/
 📋 Annotations: GUARANTEED INCLUDED
-"""
-    )
+""")
 
     # Clean up
     if os.path.exists("generate_single_batch_FIXED.py"):
         os.remove("generate_single_batch_FIXED.py")
-
 
 if __name__ == "__main__":
     main()

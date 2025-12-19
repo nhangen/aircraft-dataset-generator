@@ -5,11 +5,9 @@ This directory contains utility scripts for dataset generation and processing.
 ## Scripts
 
 ### `batch_dataset_generator_40k_with_annotations.py`
-
 **Purpose:** Generates large-scale aircraft datasets with PyVista rendering and COCO-style annotations.
 
 **Features:**
-
 - Batch processing to prevent memory leaks (subprocess isolation)
 - Generates 40,000 images with oriented bounding boxes (OBB)
 - Automatic train/val/test splitting (70%/20%/10%)
@@ -18,19 +16,16 @@ This directory contains utility scripts for dataset generation and processing.
 - Progress tracking with state persistence
 
 **Usage:**
-
 ```bash
 python scripts/batch_dataset_generator_40k_with_annotations.py
 ```
 
 **Configuration:**
-
 - Edit `OUTPUT_DIR` to change dataset location
 - Edit `BATCH_SIZE` to adjust images per batch (default: 50 scenes = 400 images)
 - Edit split ratios in `target_train`, `target_val`, `target_test`
 
 **Output Structure:**
-
 ```
 dataset_name/
 ├── train/
@@ -54,13 +49,11 @@ dataset_name/
 Traditional pose estimation models plateau at ~120° error due to constrained training data. The expanded rotation functionality breaks this barrier:
 
 **Original Constraints (causing 120° plateau):**
-
 - Pitch: ±30° (60° range)
 - Roll: ±15° (30° range)
 - Yaw: ±180° (360° range)
 
 **Expanded Ranges (solution):**
-
 ```python
 Dataset3D(
     pitch_range=(-90, 90),    # 3x expansion
@@ -78,7 +71,6 @@ Both 2D and 3D datasets support flexible task modes for targeted training:
 ### Task Mode Examples
 
 **Classification Only:**
-
 ```python
 from aircraft_toolkit import Dataset2D, Dataset3D
 
@@ -97,7 +89,6 @@ dataset_3d = Dataset3D(
 ```
 
 **Pose Estimation Only:**
-
 ```python
 # Generate datasets for 6DOF pose estimation
 dataset_2d = Dataset2D(
@@ -122,7 +113,6 @@ dataset_3d = Dataset3D(
 ```
 
 **Multi-Task Learning:**
-
 ```python
 # Generate complete annotations for joint training
 dataset_both = Dataset3D(
@@ -134,7 +124,6 @@ dataset_both = Dataset3D(
 ```
 
 ### `aircraft_40k_expanded_rotations` Dataset
-
 - **40,000 images** with expanded rotation ranges
 - **Generated:** Sep 25, 2025
 - **Time:** 114 minutes (1.9 hours)
@@ -142,7 +131,6 @@ dataset_both = Dataset3D(
 - **Validation:** 69.6% pitch violations, 92.0% roll violations (breaking old constraints)
 
 **Notes:**
-
 - Successfully generated 40,000 image dataset on Sep 22, 2025
 - Total generation time: ~2 hours
 - Memory usage: Stable at ~5.6MB per main process

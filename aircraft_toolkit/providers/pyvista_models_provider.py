@@ -8,6 +8,7 @@ instead of trying to procedurally generate aircraft geometry.
 import logging
 import os
 from pathlib import Path
+from typing import Any, Dict, List, Optional
 
 import numpy as np
 
@@ -16,7 +17,6 @@ from .base import AircraftMesh, ModelProvider
 try:
     import pyvista as pv
     from pyvista import examples
-
     PYVISTA_AVAILABLE = True
 except ImportError:
     PYVISTA_AVAILABLE = False
@@ -25,43 +25,43 @@ logger = logging.getLogger(__name__)
 
 
 class PyVistaModelsProvider(ModelProvider):
-    # Provider using real 3D models with PyVista.
+    """Provider using real 3D models with PyVista."""
 
     def __init__(self, config=None):
-        # Initialize PyVista models provider.
+        """Initialize PyVista models provider."""
         super().__init__(config)
         self.models_cache = {}
 
     def _initialize(self):
-        # Initialize provider-specific resources.
+        """Initialize provider-specific resources."""
         if not PYVISTA_AVAILABLE:
             raise ImportError("PyVista is not available. Install with: pip install pyvista")
 
         # Set configuration with defaults
-        self.models_dir = self.config.get("models_dir", "models/aircraft")
-        self.use_builtin = self.config.get("use_builtin", True)
-        self.scaling_factor = self.config.get("scaling_factor", 1.0)
-        self.center_models = self.config.get("center_models", True)
+        self.models_dir = self.config.get('models_dir', 'models/aircraft')
+        self.use_builtin = self.config.get('use_builtin', True)
+        self.scaling_factor = self.config.get('scaling_factor', 1.0)
+        self.center_models = self.config.get('center_models', True)
 
         # Performance optimization: supported extensions in priority order
-        self.supported_extensions = [".glb", ".obj", ".stl", ".ply"]
+        self.supported_extensions = ['.glb', '.obj', '.stl', '.ply']
 
         # Create models directory if it doesn't exist
         os.makedirs(self.models_dir, exist_ok=True)
 
-    def get_supported_aircraft(self) -> list[str]:
-        # Get list of supported aircraft types.
+    def get_supported_aircraft(self) -> List[str]:
+        """Get list of supported aircraft types."""
         aircraft = []
 
         # Built-in models (we'll use the airplane for all types with variations)
         if self.use_builtin:
-            aircraft.extend(["F15", "B52", "C130"])
+            aircraft.extend(['F15', 'B52', 'C130'])
 
         # Check for custom model files (optimized scanning)
         models_path = Path(self.models_dir)
         if models_path.exists():
             for ext in self.supported_extensions:
-                pattern = f"*{ext}"
+                pattern = f'*{ext}'
                 for model_file in models_path.glob(pattern):
                     name = model_file.stem.upper()
                     if name not in aircraft:
@@ -70,12 +70,10 @@ class PyVistaModelsProvider(ModelProvider):
         return aircraft
 
     def is_available(self) -> bool:
-        # Check if PyVista is available.
+        """Check if PyVista is available."""
         return PYVISTA_AVAILABLE
 
-    def create_aircraft(
-        self, aircraft_type: str, detail_level: str = "medium", **kwargs
-    ) -> AircraftMesh:
+    def create_aircraft(self, aircraft_type: str, detail_level: str = 'medium', **kwargs) -> AircraftMesh:
         """
         Load or create aircraft model.
 
@@ -102,20 +100,20 @@ class PyVistaModelsProvider(ModelProvider):
         return self._pyvista_to_aircraft_mesh(mesh, aircraft_type)
 
     def _load_aircraft_model(self, aircraft_type: str):
-        # Load aircraft model from file or use built-in.
+        """Load aircraft model from file or use built-in."""
         # First try to load custom model file
         custom_model = self._try_load_custom_model(aircraft_type)
         if custom_model is not None:
             return custom_model
 
         # Use built-in airplane model with variations
-        if self.use_builtin and aircraft_type in ["F15", "B52", "C130"]:
+        if self.use_builtin and aircraft_type in ['F15', 'B52', 'C130']:
             return self._create_builtin_variant(aircraft_type)
 
         raise ValueError(f"No model available for aircraft type: {aircraft_type}")
 
     def _try_load_custom_model(self, aircraft_type: str):
-        # Try to load a custom model file.
+        """Try to load a custom model file."""
         models_path = Path(self.models_dir)
 
         # Check for model files with this name (priority order for performance)
@@ -125,13 +123,13 @@ class PyVistaModelsProvider(ModelProvider):
                 try:
                     data = pv.read(str(model_file))
                     # Handle MultiBlock data (common with GLB files)
-                    if hasattr(data, "combine"):
+                    if hasattr(data, 'combine'):
                         mesh = data.combine()
                     else:
                         mesh = data
 
                     # Convert to PolyData if needed
-                    if hasattr(mesh, "extract_surface"):
+                    if hasattr(mesh, 'extract_surface'):
                         mesh = mesh.extract_surface()
                     elif PYVISTA_AVAILABLE and not isinstance(mesh, pv.PolyData):
                         mesh = mesh.cast_to_polydata()
@@ -143,27 +141,27 @@ class PyVistaModelsProvider(ModelProvider):
         return None
 
     def _create_builtin_variant(self, aircraft_type: str):
-        # Create a variant of the built-in airplane model.
+        """Create a variant of the built-in airplane model."""
         # Load the built-in airplane
         airplane = examples.load_airplane()
 
         # Apply transformations to create different aircraft "types"
-        if aircraft_type == "F15":
+        if aircraft_type == 'F15':
             # Fighter jet - keep as is, maybe scale down slightly
             airplane = airplane.scale([0.8, 0.8, 0.8])
 
-        elif aircraft_type == "B52":
+        elif aircraft_type == 'B52':
             # Bomber - stretch the fuselage and wings
             airplane = airplane.scale([1.5, 1.8, 0.9])
 
-        elif aircraft_type == "C130":
+        elif aircraft_type == 'C130':
             # Transport - make it bulkier
             airplane = airplane.scale([1.2, 1.1, 1.3])
 
         return airplane
 
     def _apply_aircraft_specific_transforms(self, mesh, aircraft_type: str):
-        # Apply any specific transformations for the aircraft type.
+        """Apply any specific transformations for the aircraft type."""
         # Rotate to standard orientation (nose pointing in +X direction)
         # PyVista's airplane is oriented differently, so we need to rotate it
 
@@ -184,7 +182,7 @@ class PyVistaModelsProvider(ModelProvider):
         return mesh
 
     def _pyvista_to_aircraft_mesh(self, pv_mesh, aircraft_type: str) -> AircraftMesh:
-        # Convert PyVista mesh to AircraftMesh format.
+        """Convert PyVista mesh to AircraftMesh format."""
         # Get vertices and faces
         vertices = np.array(pv_mesh.points)
 
@@ -197,9 +195,9 @@ class PyVistaModelsProvider(ModelProvider):
             while i < len(faces_raw):
                 n_verts = faces_raw[i]
                 if n_verts == 3:  # Triangle
-                    faces.append(faces_raw[i + 1 : i + 4])
+                    faces.append(faces_raw[i+1:i+4])
                 elif n_verts == 4:  # Quad - split into triangles
-                    quad = faces_raw[i + 1 : i + 5]
+                    quad = faces_raw[i+1:i+5]
                     faces.append([quad[0], quad[1], quad[2]])
                     faces.append([quad[0], quad[2], quad[3]])
                 i += n_verts + 1
@@ -213,15 +211,13 @@ class PyVistaModelsProvider(ModelProvider):
                 while i < len(faces_raw):
                     n_verts = faces_raw[i]
                     if n_verts == 3:
-                        faces.append(faces_raw[i + 1 : i + 4])
+                        faces.append(faces_raw[i+1:i+4])
                     i += n_verts + 1
                 faces = np.array(faces) if faces else np.array([[0, 1, 2]])  # Fallback
 
         # Compute normals
         pv_mesh = pv_mesh.compute_normals(inplace=False)
-        normals = (
-            np.array(pv_mesh.point_data["Normals"]) if "Normals" in pv_mesh.point_data else None
-        )
+        normals = np.array(pv_mesh.point_data['Normals']) if 'Normals' in pv_mesh.point_data else None
 
         logger.info(f"Loaded {aircraft_type}: {len(vertices)} vertices, {len(faces)} faces")
 
@@ -230,20 +226,16 @@ class PyVistaModelsProvider(ModelProvider):
             faces=faces,
             normals=normals,
             metadata={
-                "provider": "pyvista_models",
-                "aircraft_type": aircraft_type,
-                "vertex_count": len(vertices),
-                "face_count": len(faces),
-                "source": (
-                    "custom"
-                    if aircraft_type in self.models_cache and len(vertices) > 2000
-                    else "builtin"
-                ),
-            },
+                'provider': 'pyvista_models',
+                'aircraft_type': aircraft_type,
+                'vertex_count': len(vertices),
+                'face_count': len(faces),
+                'source': 'custom' if aircraft_type in self.models_cache and len(vertices) > 2000 else 'builtin'
+            }
         )
 
     def download_sample_models(self):
-        # Download sample aircraft models from online sources.
+        """Download sample aircraft models from online sources."""
         logger.info("Downloading sample aircraft models...")
 
         # This would download actual aircraft models from repositories

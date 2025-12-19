@@ -7,7 +7,7 @@ import sys
 from typing import Optional
 
 
-def setup_logger(name: str = "aircraft_toolkit", level: str = "INFO") -> logging.Logger:
+def setup_logger(name: str = 'aircraft_toolkit', level: str = 'INFO') -> logging.Logger:
     """
     Set up a logger with consistent formatting.
 
@@ -34,7 +34,8 @@ def setup_logger(name: str = "aircraft_toolkit", level: str = "INFO") -> logging
 
     # Create formatter
     formatter = logging.Formatter(
-        "%(asctime)s - %(name)s - %(levelname)s - %(message)s", datefmt="%H:%M:%S"
+        '%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+        datefmt='%H:%M:%S'
     )
     handler.setFormatter(formatter)
 
@@ -57,11 +58,10 @@ def get_logger(name: Optional[str] = None) -> logging.Logger:
     if name is None:
         # Get calling module name
         import inspect
-
         frame = inspect.currentframe()
         if frame and frame.f_back:
-            name = frame.f_back.f_globals.get("__name__", "aircraft_toolkit")
+            name = frame.f_back.f_globals.get('__name__', 'aircraft_toolkit')
         else:
-            name = "aircraft_toolkit"
+            name = 'aircraft_toolkit'
 
     return logging.getLogger(name)
