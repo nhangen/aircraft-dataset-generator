@@ -10,6 +10,7 @@ abstract pose estimation.
 import logging
 import sys
 from pathlib import Path
+from pprint import pformat
 
 # Add the toolkit to Python path
 sys.path.insert(0, str(Path(__file__).parent))
@@ -17,9 +18,7 @@ sys.path.insert(0, str(Path(__file__).parent))
 from aircraft_toolkit import Dataset3D  # noqa: E402
 
 # Configure logging
-logging.basicConfig(
-    level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"
-)
+logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
 logger = logging.getLogger(__name__)
 
 
@@ -46,7 +45,7 @@ def main():
         include_surface_normals=False,  # Not needed for pose estimation
     )
 
-    logger.info(f"Dataset configuration:")
+    logger.info("Dataset configuration:")
     logger.info(f"  Aircraft types: {dataset.aircraft_types}")
     logger.info(f"  Total scenes: {dataset.num_scenes}")
     logger.info(f"  Views per scene: {dataset.views_per_scene}")
@@ -62,6 +61,26 @@ def main():
             annotation_format="custom_3d",  # Custom format with OBB data
             num_workers=1,  # Single worker to avoid rendering issues
         )
+
+        # Log a concise summary and sample values from the returned object.
+
+        logger.info(f"Generation returned type: {type(_results).__name__}")
+
+        if isinstance(_results, dict):
+            logger.info(f"Result keys: {list(_results.keys())}")
+            for k, v in _results.items():
+                if isinstance(v, (list, tuple, set)):
+                    logger.info(f"  {k}: {len(v)} items")
+                    for i, item in enumerate(v[:5]):  # show up to first 5 entries
+                        logger.debug(f"    {k}[{i}]: {pformat(item)}")
+                else:
+                    logger.info(f"  {k}: {pformat(v)}")
+        elif isinstance(_results, (list, tuple, set)):
+            logger.info(f"Result is a sequence of length {len(_results)}")
+            for i, item in enumerate(_results[:10]):  # show up to first 10 entries
+                logger.debug(f"  [{i}]: {pformat(item)}")
+        else:
+            logger.info(f"Result value: {pformat(_results)}")
 
         logger.info("Dataset generation completed successfully!")
         logger.info("Dataset generation finished")

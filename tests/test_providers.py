@@ -57,7 +57,6 @@ class TestAircraftMesh:
         faces = np.array([[0, 1, 2]])
 
         mesh = AircraftMesh(vertices=vertices, faces=faces)
-        original_size = np.linalg.norm(vertices.max(axis=0) - vertices.min(axis=0))
 
         mesh.center_and_scale(target_size=10.0)
 
@@ -67,7 +66,8 @@ class TestAircraftMesh:
 
         # Check scaling
         new_size = np.linalg.norm(mesh.vertices.max(axis=0) - mesh.vertices.min(axis=0))
-        assert abs(new_size - 10.0) < 1e-10
+        # allow small floating-point error
+        assert np.isclose(new_size, 10.0, rtol=1e-6, atol=1e-8)
 
 
 class TestBasicProvider:

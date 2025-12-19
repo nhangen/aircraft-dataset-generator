@@ -110,6 +110,4 @@ def validate_image_size(image_size: Union[tuple, int]) -> tuple:
         return (width, height)
 
     else:
-        raise ValueError(
-            "Image size must be a positive integer or (width, height) tuple"
-        )
+        raise ValueError("Image size must be a positive integer or (width, height) tuple")

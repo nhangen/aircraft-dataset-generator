@@ -36,9 +36,7 @@ class PyVistaModelsProvider(ModelProvider):
     def _initialize(self):
         # Initialize provider-specific resources.
         if not PYVISTA_AVAILABLE:
-            raise ImportError(
-                "PyVista is not available. Install with: pip install pyvista"
-            )
+            raise ImportError("PyVista is not available. Install with: pip install pyvista")
 
         # Set configuration with defaults
         self.models_dir = self.config.get("models_dir", "models/aircraft")
@@ -223,14 +221,10 @@ class PyVistaModelsProvider(ModelProvider):
         # Compute normals
         pv_mesh = pv_mesh.compute_normals(inplace=False)
         normals = (
-            np.array(pv_mesh.point_data["Normals"])
-            if "Normals" in pv_mesh.point_data
-            else None
+            np.array(pv_mesh.point_data["Normals"]) if "Normals" in pv_mesh.point_data else None
         )
 
-        logger.info(
-            f"Loaded {aircraft_type}: {len(vertices)} vertices, {len(faces)} faces"
-        )
+        logger.info(f"Loaded {aircraft_type}: {len(vertices)} vertices, {len(faces)} faces")
 
         return AircraftMesh(
             vertices=vertices,

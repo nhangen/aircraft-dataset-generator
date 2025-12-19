@@ -44,9 +44,7 @@ class ProviderRegistry:
             ValueError: If name is already registered or provider is invalid
         """
         if not issubclass(provider_class, ModelProvider):
-            raise ValueError(
-                f"Provider class {provider_class} must inherit from ModelProvider"
-            )
+            raise ValueError(f"Provider class {provider_class} must inherit from ModelProvider")
 
         if name in cls._providers:
             logger.warning(f"Overwriting existing provider: {name}")
@@ -55,9 +53,7 @@ class ProviderRegistry:
         logger.info(f"Registered provider: {name} ({provider_class.__name__})")
 
     @classmethod
-    def get(
-        cls, name: Optional[str] = None, config: Optional[Dict] = None
-    ) -> ModelProvider:
+    def get(cls, name: Optional[str] = None, config: Optional[Dict] = None) -> ModelProvider:
         """
         Get a provider instance.
 
@@ -76,9 +72,7 @@ class ProviderRegistry:
 
         if name not in cls._providers:
             available = ", ".join(cls._providers.keys())
-            raise ValueError(
-                f"Provider '{name}' not found. Available providers: {available}"
-            )
+            raise ValueError(f"Provider '{name}' not found. Available providers: {available}")
 
         provider_class = cls._providers[name]
         return provider_class(config=config)
@@ -122,9 +116,7 @@ def register_provider(name: str, provider_class: Type[ModelProvider]):
     ProviderRegistry.register(name, provider_class)
 
 
-def get_provider(
-    name: Optional[str] = None, config: Optional[Dict] = None
-) -> ModelProvider:
+def get_provider(name: Optional[str] = None, config: Optional[Dict] = None) -> ModelProvider:
     """
     Get a provider from the global registry.
 

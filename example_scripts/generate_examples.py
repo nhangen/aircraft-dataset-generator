@@ -99,10 +99,10 @@ class DatasetGenerator:
             f"{output_dir}/3d", num_scenes=10, views_per_scene=4
         )
 
-    print("\n📈 Comparison Summary:")
-    print("  2D Silhouettes: {} images".format(results_2d["total_samples"]))
-    print("  3D Multi-view: {} images".format(results_3d["total_images"]))
-    return {"2d": results_2d, "3d": results_3d}
+        print("\n📈 Comparison Summary:")
+        print("  2D Silhouettes: {} images".format(results_2d["total_samples"]))
+        print("  3D Multi-view: {} images".format(results_3d["total_images"]))
+        return {"2d": results_2d, "3d": results_3d}
 
 
 def main():
@@ -128,9 +128,7 @@ Examples:
         help="Dataset generation mode (default: test)",
     )
 
-    parser.add_argument(
-        "--output", default="output", help="Output directory (default: output)"
-    )
+    parser.add_argument("--output", default="output", help="Output directory (default: output)")
 
     parser.add_argument(
         "--obb",
@@ -171,18 +169,14 @@ Examples:
             )
 
         elif args.mode == "2d":
-            generator.silhouette_2d_dataset(
-                f"{args.output}/2d", num_samples=args.samples
-            )
+            generator.silhouette_2d_dataset(f"{args.output}/2d", num_samples=args.samples)
 
         elif args.mode == "comparison":
             generator.comparison_dataset(f"{args.output}/comparison")
 
         elif args.mode == "all":
             generator.test_dataset(f"{args.output}/test", include_obb=args.obb)
-            generator.silhouette_2d_dataset(
-                f"{args.output}/2d", num_samples=args.samples
-            )
+            generator.silhouette_2d_dataset(f"{args.output}/2d", num_samples=args.samples)
             generator.production_3d_dataset(
                 f"{args.output}/3d", num_scenes=args.scenes, include_obb=args.obb
             )

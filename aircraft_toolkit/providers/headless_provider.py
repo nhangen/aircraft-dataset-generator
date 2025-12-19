@@ -224,9 +224,7 @@ class HeadlessProvider(ModelProvider):
         draw = ImageDraw.Draw(image)
 
         # Apply aircraft transformations
-        transformed_vertices = self._apply_transformations(
-            mesh.vertices, aircraft_pose, camera
-        )
+        transformed_vertices = self._apply_transformations(mesh.vertices, aircraft_pose, camera)
 
         # Project to 2D
         projected_vertices = []
@@ -243,14 +241,10 @@ class HeadlessProvider(ModelProvider):
         # Draw filled polygons
         for face in mesh.faces:
             if len(face) >= 3:
-                face_points = [
-                    projected_vertices[i] for i in face if i < len(projected_vertices)
-                ]
+                face_points = [projected_vertices[i] for i in face if i < len(projected_vertices)]
                 if len(face_points) >= 3:
                     try:
-                        draw.polygon(
-                            face_points, fill=(100, 100, 100), outline=(50, 50, 50)
-                        )
+                        draw.polygon(face_points, fill=(100, 100, 100), outline=(50, 50, 50))
                     except Exception:
                         pass  # Skip invalid polygons
 

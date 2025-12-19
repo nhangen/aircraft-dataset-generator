@@ -102,9 +102,7 @@ class Dataset2D:
             Dict with dataset statistics and file paths
         """
         print("🛩️  Generating 2D Aircraft Dataset")
-        print(
-            "📊 {} samples, {} aircraft types".format(self.num_samples, len(self.aircraft_types))
-        )
+        print("📊 {} samples, {} aircraft types".format(self.num_samples, len(self.aircraft_types)))
 
         # Create output directories
         os.makedirs(output_dir, exist_ok=True)
@@ -122,9 +120,7 @@ class Dataset2D:
         test_annotations = self._generate_split("test", test_size, output_dir)
 
         # Save annotations
-        self._save_annotations(
-            train_annotations, output_dir, "train", annotation_format
-        )
+        self._save_annotations(train_annotations, output_dir, "train", annotation_format)
         self._save_annotations(val_annotations, output_dir, "val", annotation_format)
         self._save_annotations(test_annotations, output_dir, "test", annotation_format)
 
@@ -137,9 +133,7 @@ class Dataset2D:
             "output_dir": output_dir,
         }
 
-    def _generate_split(
-        self, split_name: str, num_samples: int, output_dir: str
-    ) -> List[Dict]:
+    def _generate_split(self, split_name: str, num_samples: int, output_dir: str) -> List[Dict]:
         # Generate samples for a specific split
         annotations = []
 
@@ -245,9 +239,7 @@ class Dataset2D:
 
         return image, bbox_data
 
-    def _scale_points_to_image(
-        self, points: List[Tuple[float, float]]
-    ) -> List[Tuple[int, int]]:
+    def _scale_points_to_image(self, points: List[Tuple[float, float]]) -> List[Tuple[int, int]]:
         # Scale normalized aircraft points to image coordinates
         scaled = []
         center_x, center_y = self.image_size[0] // 2, self.image_size[1] // 2
@@ -275,17 +267,13 @@ class Dataset2D:
         else:
             raise ValueError(f"Unsupported annotation format: {format_type}")
 
-    def _save_custom_format(
-        self, annotations: List[Dict], output_dir: str, split_name: str
-    ):
+    def _save_custom_format(self, annotations: List[Dict], output_dir: str, split_name: str):
         # Save in custom JSON format (now matches 3D format)
         output_file = os.path.join(output_dir, f"{split_name}_annotations.json")
         with open(output_file, "w") as f:
             json.dump(annotations, f, indent=2)
 
-    def _save_coco_format(
-        self, annotations: List[Dict], output_dir: str, split_name: str
-    ):
+    def _save_coco_format(self, annotations: List[Dict], output_dir: str, split_name: str):
         # Save in COCO format with task mode support
         coco_data = {
             "info": {"description": f"Aircraft Dataset - {self.task_mode} mode"},
@@ -320,9 +308,7 @@ class Dataset2D:
             # Add classification data if in classification or both mode
             if self.task_mode in ["classification", "both"] and "aircraft_type" in ann:
                 category_map = {"F15": 1, "B52": 2, "C130": 3}
-                coco_annotation["category_id"] = category_map.get(
-                    ann["aircraft_type"], 1
-                )
+                coco_annotation["category_id"] = category_map.get(ann["aircraft_type"], 1)
 
             # Add bounding box and pose data if in pose or both mode
             if self.task_mode in ["pose", "both"]:

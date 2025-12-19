@@ -235,9 +235,7 @@ def merge_annotations():
 
         # Collect all batch annotation files for this split
         all_annotations = []
-        batch_files = sorted(
-            Path(".").glob(f"{OUTPUT_DIR}/{split}_batch_*_annotations.json")
-        )
+        batch_files = sorted(Path(".").glob(f"{OUTPUT_DIR}/{split}_batch_*_annotations.json"))
 
         for batch_file in batch_files:
             try:
@@ -276,12 +274,8 @@ Fixed: Proper annotation handling guaranteed
 
     while True:
         state = load_state()
-        total_target_scenes = (
-            state["target_train"] + state["target_val"] + state["target_test"]
-        )
-        current_scenes = (
-            state["train_scenes"] + state["val_scenes"] + state["test_scenes"]
-        )
+        total_target_scenes = state["target_train"] + state["target_val"] + state["target_test"]
+        current_scenes = state["train_scenes"] + state["val_scenes"] + state["test_scenes"]
 
         if current_scenes >= total_target_scenes:
             print("🎉 GENERATION COMPLETE!")

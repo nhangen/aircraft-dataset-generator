@@ -120,11 +120,15 @@ class TestDataset2D(unittest.TestCase):
         # Test custom annotation format generation
         small_dataset = Dataset2D(aircraft_types=["F15"], num_samples=2, image_size=(32, 32))
 
-        _results = small_dataset.generate(
+        results = small_dataset.generate(
             output_dir=self.temp_dir,
             split_ratios=(1.0, 0.0, 0.0),  # Only train split
             annotation_format="custom",
         )
+
+        # optional explicit check
+        self.assertEqual(results["total_samples"], 2)
+        self.assertEqual(results["train_samples"], 2)
 
         # Load and validate annotations
         ann_file = os.path.join(self.temp_dir, "train_annotations.json")
@@ -165,6 +169,7 @@ class TestDataset2D(unittest.TestCase):
         results = small_dataset.generate(
             output_dir=self.temp_dir, split_ratios=(1.0, 0.0, 0.0), annotation_format="coco"
         )
+        self.assertEqual(results["total_samples"], 2)
 
         # Load and validate COCO annotations
         coco_file = os.path.join(self.temp_dir, "train_coco.json")
@@ -185,9 +190,12 @@ class TestDataset2D(unittest.TestCase):
             aircraft_types=["F15", "B52", "C130"], num_samples=6, image_size=(32, 32)
         )
 
-        _results = multi_dataset.generate(
-            output_dir=self.temp_dir, split_ratios=(1.0, 0.0, 0.0), annotation_format="custom"
+        results = multi_dataset.generate(
+            output_dir=self.temp_dir,
+            split_ratios=(1.0, 0.0, 0.0),
+            annotation_format="custom",
         )
+        self.assertEqual(results["total_samples"], 6)
 
         # Load annotations and check aircraft type distribution
         ann_file = os.path.join(self.temp_dir, "train_annotations.json")

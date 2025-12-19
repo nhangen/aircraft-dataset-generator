@@ -290,9 +290,7 @@ def merge_annotations():
 
         # Collect all batch annotation files
         all_annotations = []
-        for batch_file in sorted(
-            Path(annotations_dir).glob("batch_*_annotations.json")
-        ):
+        for batch_file in sorted(Path(annotations_dir).glob("batch_*_annotations.json")):
             try:
                 with open(batch_file, "r") as f:
                     batch_data = json.load(f)
@@ -332,12 +330,8 @@ Splits: train/val/test with COCO-style JSON annotations
     while True:
         # Check current state
         state = load_state()
-        total_target_scenes = (
-            state["target_train"] + state["target_val"] + state["target_test"]
-        )
-        current_scenes = (
-            state["train_scenes"] + state["val_scenes"] + state["test_scenes"]
-        )
+        total_target_scenes = state["target_train"] + state["target_val"] + state["target_test"]
+        current_scenes = state["train_scenes"] + state["val_scenes"] + state["test_scenes"]
 
         # Check if complete
         if current_scenes >= total_target_scenes:

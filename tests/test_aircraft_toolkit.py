@@ -14,9 +14,7 @@ def test_aircraft_toolkit_import():
     try:
         import aircraft_toolkit
 
-        assert hasattr(aircraft_toolkit, "__version__") or hasattr(
-            aircraft_toolkit, "__name__"
-        )
+        assert hasattr(aircraft_toolkit, "__version__") or hasattr(aircraft_toolkit, "__name__")
     except ImportError as e:
         pytest.skip(f"Aircraft toolkit not properly installed: {e}")
 
